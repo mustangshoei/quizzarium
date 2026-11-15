@@ -3,7 +3,7 @@
 Jeu consacré à l'histoire (nom provisoire). Il fait partie du dossier des jeux : lancement, comptes
 communs et serveur sont décrits dans le [README à la racine](../README.md).
 
-**Version 2.1.0** (numérotation MAJEUR.MINEUR.CORRECTIF : voir « Versions » dans le
+**Version 2.2.0** (numérotation MAJEUR.MINEUR.CORRECTIF : voir « Versions » dans le
 [README à la racine](../README.md#versions)).
 
 **Modes de jeu** : trois sont jouables, **Qui est venu en premier ?**, **Chronologie** et **Trouver la
@@ -25,8 +25,8 @@ dans le stockage du navigateur).
 
 | № | Chapitre | Planche | Cartes |
 |---|---|---|---|
-| 01 | **Le fil du temps** | un sablier et la frise du temps, coupée par l'an 1 | Qui est venu en premier ? · Chronologie · Trouver la date |
-| 02 | **Les grandes figures** | trois portraits-médailles (Napoléon, Jeanne d'Arc, Marie Curie) et une plume | Deviner la personne · Qui a dit ça ? |
+| 01 | **Le fil du temps** | un sablier et la frise du temps, coupée par l'an 1 | Chronologie · Trouver la date |
+| 02 | **Les grandes figures** | trois portraits-médailles (Napoléon, Jeanne d'Arc, Marie Curie) et une plume | Qui est venu en premier ? · Deviner la personne · Qui a dit ça ? |
 | 03 | **L'épreuve de l'historien** | une balance (vrai d'un côté, faux de l'autre) et deux maillons de chaîne | Les paires · Vrai ou Faux |
 
 Les chapitres, l'ordre des cartes et leurs textes sont décrits en tête de `js/menu.js` (`CHAPITRES`,
@@ -110,17 +110,33 @@ indices (thématique · région), jamais sa date. Les événements viennent de `
 - **Score** : un point par événement placé à sa vraie place, donc 5 par manche. La partie est enregistrée
   pour le joueur (bonnes réponses = événements bien placés, questions = 5 × le nombre de manches).
 
-## Qui est venu en premier ? (`js/modes/premier.js`)
+## Qui est venu en premier ? (`js/modes/premier.js`, `css/premier.css`)
 
-Deux personnages s'affichent dans des cadres (même principe que les rectangles de la page d'accueil) :
-le portrait-médaille au centre, le nom sur un cartouche (pays · domaine · époque). La consigne change à
-chaque manche : « Qui est né **⟵ EN PREMIER** ? » (vert d'eau) ou « Qui est né **EN DERNIER ⟶** ? » (orange). On
-clique sur le bon cadre (ou flèche gauche / droite) ; les années s'inscrivent sur les cartouches, un
-badge ✓ / ✗ marque les cadres et une mini-frise montre l'écart. Bonne réponse : la manche suivante
-arrive seule au bout de 1,8 s (le bouton « Suivant » se remplit) ; erreur : on lit, puis « Suivant ».
-Série de bonnes réponses affichée (« 🔥 3 d'affilée »). Jamais deux personnes nées la même année ; si une
-date est approximative, au moins 15 ans d'écart. Réglages : niveau (Facile = difficulté 1-2, Moyen = 1-3,
-Expert = toutes) et longueur (10, 20 ou 30 questions).
+Chapitre 02, « Les grandes figures ». Deux personnages s'affichent en grand au milieu de l'écran, chacun
+dans un cadre (même principe que les rectangles de la page d'accueil) : le portrait-médaille, et le nom sur
+un cartouche (pays · domaine · époque, puis la date de naissance). La consigne est toujours la même,
+rappelée en haut de l'écran : **qui est né en premier ?** On clique sur le plus ancien des deux (ou flèche
+gauche / droite) ; les années s'inscrivent sur les cartouches, un badge ✓ / ✗ marque les cadres et une
+mini-frise montre l'écart.
+
+- **Partie sans fin, en mort subite** : pas de nombre de questions ; la partie s'arrête à la première
+  erreur. « Quitter » l'arrête aussi, et la série en cours compte. Le score est le nombre de bonnes
+  réponses d'affilée ; un **record par niveau** est gardé pour le joueur (compte ou invité) et affiché en
+  haut de l'écran (« 🏆 Nouveau record ! » dès qu'il est battu).
+- **Un personnage reste, l'autre change** : après une bonne réponse (la suite arrive seule au bout de
+  1,8 s, le bouton « Suivant » se remplit), l'un des deux personnages reste à sa place et l'autre est
+  remplacé. Celui qui reste est tiré au hasard, mais personne ne joue plus de **3 manches de suite**. Sa
+  date reste affichée : on compare le nouveau venu (« Né en ? ») à une date connue.
+- **Tirage** : une pioche mélangée de la sélection ; un personnage ne revient pas avant que tous les
+  autres soient passés, et au remélange les plus récents passent en fin de pioche (personne ne revient
+  aussitôt d'un tour à l'autre). Jamais deux personnes nées la même année ; si une date est
+  approximative, au moins 15 ans d'écart.
+- **Préphase** : la **période** (quatre cartes cumulables : Antiquité, Moyen Âge, époque moderne, époque
+  contemporaine, avec l'interrupteur « Tout / Aucun » ; époque = celle du milieu de la vie) et la
+  **difficulté** (un seul choix : Facile = difficulté 1-2, Moyen = 1-3, Expert = toutes), avec le nombre de
+  personnages sur chaque case ; lancement impossible sous 3 personnages. Réglages retenus.
+- **Fin** : la série, le record (battu ou non), l'erreur qui a arrêté la partie (« Vous avez choisi X, né
+  en 1480 ; Y est né 29 ans plus tôt »), le niveau, les périodes et le temps.
 
 ## Portraits (`img/`, `js/donnees/portraits.js`)
 
@@ -143,6 +159,7 @@ d'où il s'affiche dans le menu « Jeux », sur la page d'accueil et en bas du m
 
 | Version | Date | Changements |
 |---|---|---|
+| 2.2.0 | 13/11/2026 | **Qui est venu en premier ?** change de règle et passe dans le chapitre 02 (Les grandes figures). Toujours « qui est né en premier ? » (plus de « en dernier »), sans nombre de questions : la partie continue jusqu'à la première erreur, avec un record par niveau. Après chaque bonne réponse, l'un des deux personnages reste (tiré au hasard, 3 manches de suite au plus) et garde sa date affichée ; l'autre est remplacé, sans revenir avant que tous les autres soient passés. Préphase sur le modèle de « Trouver la date » : période en quatre cartes (« Tout / Aucun ») et difficulté en trois cartes, avec le nombre de personnages. Écran de jeu : les deux cadres en grand au milieu, la consigne fixe dans la barre du haut. Styles du mode dans `css/premier.css` ; l'interrupteur « Tout / Aucun » et les cartes des périodes passent de `date.css` à `style.css` (partagés). |
 | 2.1.0 | 11/11/2026 | Nouveau mode **Trouver la date** : un événement (thème, région, intitulé, résumé), sa date à taper — l'année seule, ou la date exacte au jour près quand on la connaît ; juste ou faux, avec une marge pour les dates approximatives. Préphase en grille alignée : façon de jouer, 1 à 50 événements, filtres croisés par période, difficulté et thématique (emojis, interrupteurs « Tout / Aucun », réglages retenus). Fin : anneau de réussite, erreurs, « Revoir mes erreurs ». Les styles des filtres passent de `chronologie.css` à `style.css` (partagés). |
 | 2.0.0 | 10/11/2026 | **Nouvelle interface**, sur le modèle des autres jeux : menu « atlas » en trois chapitres (Le fil du temps, Les grandes figures, L'épreuve de l'historien), chacun avec sa planche dessinée et ses cartes ; les deux modes jouables en tête du premier chapitre. Thème « Chroniques » (polices locales Bricolage Grotesque et IBM Plex Mono, fond de papier réglé). Compte : menu déroulant en haut à gauche (comptes déjà utilisés ici, changer de compte) au lieu d'une fenêtre au centre. **Jeu ouvert au public.** |
 | 1.2.0 | 09/11/2026 | Nouveau mode **Chronologie** : cinq événements à placer sur une frise (glisser-déposer, clic ou clavier), validation qui révèle les dates, préphase avec filtres croisés par période, difficulté et thématique (lancement impossible sous 5 événements). 939 événements dans `dates.js`. |

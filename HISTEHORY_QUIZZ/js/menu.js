@@ -35,15 +35,15 @@
 
   // L'ordre de MENU est celui des cartes dans chaque chapitre : les modes jouables d'abord.
   const MENU = [
-    { mode: 'premier', chapitre: 'temps', picto: 'medailles', teinte: 'turquoise', titre: 'Qui est venu en premier ?',
-      description: 'Deux personnages : lequel est né en premier, ou en dernier ?',
-      meta: () => nombre((H.PERSONNES || []).length) + ' personnages · 10 à 30 questions' },
     { mode: 'chronologie', chapitre: 'temps', picto: 'frise', teinte: 'ambre', titre: 'Chronologie',
       description: 'Cinq événements à remettre dans l\'ordre sur la frise du temps.',
       meta: () => nombre((H.DATES || []).length) + ' événements · 5 par manche' },
     { mode: 'date', chapitre: 'temps', picto: 'calendrier', teinte: 'cuivre', titre: 'Trouver la date',
       description: 'Un événement historique : retrouvez son année, ou sa date exacte.',
       meta: () => nombre((H.DATES || []).length) + ' événements · année ou date exacte' },
+    { mode: 'premier', chapitre: 'figures', picto: 'medailles', teinte: 'turquoise', titre: 'Qui est venu en premier ?',
+      description: 'Deux personnages : lequel est né en premier ? L\'un reste, l\'autre change, jusqu\'à la première erreur.',
+      meta: () => nombre((H.PERSONNES || []).length) + ' personnages · sans fin' },
     { mode: 'personne', chapitre: 'figures', picto: 'silhouette', teinte: 'sable', titre: 'Deviner la personne',
       description: 'Un personnage se cache derrière des indices progressifs : moins il en faut, plus vous gagnez de points.', meta: 'Indices progressifs' },
     { mode: 'citation', chapitre: 'figures', picto: 'guillemets', teinte: 'parchemin', titre: 'Qui a dit ça ?',

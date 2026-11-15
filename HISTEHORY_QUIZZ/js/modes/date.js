@@ -171,11 +171,11 @@
       groupe.classList.add('chrono-groupe');
       const tete = el('div', 'chrono-groupe__tete');
       // « Tout ◯ Aucun » : les deux mots et, entre eux, un interrupteur (allumé quand tout est coché)
-      const outils = el('span', 'chrono-groupe__outils date-bascule');
+      const outils = el('span', 'chrono-groupe__outils bascule');
       const toutOuRien = (tout) => { choisis[f.id] = new Set(tout ? Object.keys(f.libelles()) : []); majPreparation(); };
       const bTout = el('button', 'btn-link', 'Tout');
       const bAucun = el('button', 'btn-link', 'Aucun');
-      const bascule = el('button', 'date-bascule__interrupteur');
+      const bascule = el('button', 'bascule__interrupteur');
       [bTout, bAucun, bascule].forEach((b) => { b.type = 'button'; });
       bascule.setAttribute('role', 'switch');
       bascule.setAttribute('aria-label', f.titre + ' : tout cocher');
@@ -185,7 +185,7 @@
       bascules[f.id] = bascule;
       outils.append(bTout, bascule, bAucun);
       tete.append(el('h2', 'config__titre', f.titre), outils);
-      const liste = el('div', f.carte ? 'date-cartes' : f.lignes ? 'chrono-puces date-lignes' : 'chrono-puces');
+      const liste = el('div', f.carte ? 'puces-cartes' : f.lignes ? 'chrono-puces date-lignes' : 'chrono-puces');
       puces[f.id] = {};
       Object.entries(f.libelles()).forEach(([valeur, libelle]) => {
         const b = el('button', f.carte ? 'puce puce--carte' : 'puce');

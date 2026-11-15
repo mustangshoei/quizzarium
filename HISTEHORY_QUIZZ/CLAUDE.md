@@ -25,13 +25,13 @@ dans le `CLAUDE.md` de la racine ; la documentation pour un humain est dans `REA
 | `js/core.js` | petit noyau : enregistrement des modes, `afficher(idSection)`, `data-action="menu"` |
 | `js/menu.js` | **le menu « atlas » et son catalogue** : `CHAPITRES` (3), `MENU` (les 7 modes, avec leur chapitre ; les modes jouables d'abord), `PICTOS`, `TEINTES`, `PLANCHES` (dessins SVG ; le chapitre des figures reprend trois portraits de `img/`). Une carte s'active quand son mode est enregistré ; chargé en dernier |
 | `js/modes/<mode>.js` | **un fichier par mode** (aujourd'hui : `premier.js`, `chronologie.js`, `date.js`) |
-| `css/style.css` | polices, couleurs (variables), fond, boutons, écrans de configuration / partie / fin des modes, **filtres en cases** de la préphase (`.puce`, `.chrono-groupe`, `.chrono-etat` : partagés par « Chronologie » et « Trouver la date ») |
+| `css/style.css` | polices, couleurs (variables), fond, boutons, écrans de configuration / partie / fin des modes, **filtres en cases** de la préphase (`.puce`, `.chrono-groupe`, `.chrono-etat` ; l'interrupteur « Tout / Aucun » `.bascule` ; les cartes `.puces-cartes` / `.puce--carte` : partagés par les modes) |
 | `css/menu.css`, `css/compte.css` | le menu « atlas » (repris de Natehure) ; le bouton et le menu déroulant du compte |
-| `css/chronologie.css`, `css/date.css` | un mode à l'écran riche a sa propre feuille, chargée après les autres |
+| `css/premier.css`, `css/chronologie.css`, `css/date.css` | chaque mode a sa propre feuille, chargée après les autres (`premier.css` : cadres, mini-frise) |
 | `js/donnees/personnes.js` | 573 personnes (décédées), table `DIFFICULTE` (1 à 5, 3 par défaut) |
 | `js/donnees/dates.js` | 939 événements datés, triés par date, répartis sur toutes les époques et les six régions (Europe : environ les deux tiers) ; difficulté de 1 à 5 : 23 / 68 / 256 / 345 / 247. Chargé par `index.html`, utilisé par « Chronologie » et « Trouver la date » |
 | `js/donnees/portraits.js` | id → image : **généré** par `outils/portraits/f5_portraits.py`, ne pas l'éditer à la main |
-| `js/profils.js` / `js/compte.js` | statistiques (invité ou compte) / bouton et menu déroulant du compte (repris de Natehure, avec renommer, mot de passe, suppression et reprise des statistiques de l'invité) |
+| `js/profils.js` / `js/compte.js` | statistiques (invité ou compte : historique, totaux, **records** par clé `<mode>.<réglage>`, lus par `HistProfils.record(clé)`, battus par `enregistrerPartie({ …, record: clé })`) / bouton et menu déroulant du compte (repris de Natehure, avec renommer, mot de passe, suppression et reprise des statistiques de l'invité) |
 | `img/personnes/`, `img/generiques/`, `img/CREDITS.md` | portraits (générés, ~30 Ko chacun), images génériques, crédits (généré) |
 | `outils/portraits/` | fabrique des portraits en Python (mode d'emploi : son `README.md`) |
 
@@ -73,15 +73,32 @@ d'Anotehomy (`js/game/matcher.js`, `js/game/lexique-*.js`) : jamais de chargemen
 - Le résumé ne contient jamais le nom de la personne (il pourra servir d'indice).
 - L'id d'une personne sert aux portraits et pourra servir aux statistiques : ne plus le changer.
 
-## « Qui est venu en premier ? » (`js/modes/premier.js`) : ce qui est à retenir
+## « Qui est venu en premier ? » (`js/modes/premier.js`, `css/premier.css`) : ce qui est à retenir
 
-- Deux cadres « médaille » (portrait, cartouche nom / pays · domaine · époque) ; consigne qui alterne
-  « ⟵ EN PREMIER » (vert d'eau) et « EN DERNIER ⟶ » (orange) ; clic ou ← / →.
-- Tirage : jamais la même année de naissance ; au moins `ECART_APPROX` = 15 ans si une date est
-  approximative (la réponse doit rester sûre).
-- Bonne réponse : suite automatique après `DELAI_AUTO` = 1,8 s (le bouton « Suivant » se remplit) ;
-  erreur : on lit, puis « Suivant » ou Entrée. Série affichée, badges ✓ / ✗, mini-frise de l'écart.
-- Niveaux : Facile (difficulté ≤ 2), Moyen (≤ 3), Expert (toutes) ; longueur 10, 20 ou 30.
+Règles choisies par Théo le 13/11/2026 (version 2.2.0) :
+
+- Toujours « qui est né **en premier** ? » (plus de « en dernier ») ; la consigne, fixe, est dans la barre
+  du haut. Deux grands cadres « médaille » au milieu de l'écran (portrait, cartouche nom / pays · domaine ·
+  époque / date) ; clic ou ← / →.
+- **Mort subite**, sans nombre de questions : la partie s'arrête à la première erreur ; « Quitter » aussi
+  (la série compte s'il y a au moins une bonne réponse). Score = bonnes réponses d'affilée ; record par
+  niveau, clé `premier.<niveau>` (`facile`, `moyen`, `expert` : à ne plus changer).
+- Après une bonne réponse, **l'un reste, l'autre est remplacé** : celui qui reste est tiré au hasard parmi
+  ceux qui ont joué moins de `MAX_MANCHES` = 3 manches de suite ; il garde sa place et **sa date reste
+  affichée** (le nouveau venu : « Né en ? »). La suite est préparée dès la réponse (`partie.suite`, portrait
+  préchargé), puis appliquée par `suivant()`.
+- **Pioche** : un personnage remplacé ne revient pas avant que tous les autres soient passés (la pioche ne
+  se remplit qu'une fois vide, sans les deux personnages à l'écran) ; au remplissage, la moitié la plus
+  récente des entrés (`partie.recents`) passe en fin de pioche. Vérifié sur 3 200 manches : un personnage
+  revient après au moins la moitié de la sélection.
+- Jamais la même année de naissance ; au moins `ECART_APPROX` = 15 ans si une date est approximative. Si
+  rien dans la pioche ne se départage d'avec celui qui reste, on essaie l'autre, puis on remplit la pioche,
+  puis deux nouveaux (cas des toutes petites sélections).
+- Préphase : période (époque de la personne, au milieu de sa vie ; cartes cumulables, « Tout / Aucun ») ×
+  difficulté (un seul choix : Facile ≤ 2, Moyen ≤ 3, Expert = toutes), nombres croisés ; lancement
+  impossible sous `MIN_PERSONNES` = 3 ou sans paire départageable. Réglages : `histehory.premier.reglages`.
+- Bonne réponse : suite après `DELAI_AUTO` = 1,8 s (le bouton « Suivant » se remplit) ; erreur : on lit la
+  frise, puis « Voir le résultat » ou Entrée. Fin : série, record, l'erreur fatale, niveau, périodes, temps.
 
 ## « Chronologie » (`js/modes/chronologie.js`, `css/chronologie.css`) : ce qui est à retenir
 
@@ -124,7 +141,8 @@ d'Anotehomy (`js/game/matcher.js`, `js/game/lexique-*.js`) : jamais de chargemen
   rondes cochées. **Rien ne bouge quand les nombres changent** (demande de Théo) : compteurs de largeur fixe,
   et difficulté / thématiques en **lignes justifiées** (`lignes` du filtre, `LIGNES_DOMAINE` : 5 lignes de
   3 + 2 regroupées par sens ; une nouvelle thématique doit y être placée), libres sur téléphone ; interrupteur « Tout / Aucun » à trois positions (`data-etat` : tout, partiel, aucun).
-  Tout le style est restreint à `.date-config` (ne touche pas « Chronologie »). Tient en 1280 × 720.
+  Tout le style propre au mode est restreint à `.date-config` (ne touche pas « Chronologie ») ; l'interrupteur
+  et les cartes des périodes sont dans `style.css`, partagés avec « Qui est venu en premier ? ». Tient en 1280 × 720.
   Réglages retenus (`histehory.date.reglages`).
 - Fin : anneau, erreurs (3 visibles, « Voir les N autres »), « Revoir mes erreurs » (`demarrer(liste)`,
   partie enregistrée avec « révision » dans le titre).
@@ -140,6 +158,12 @@ d'Anotehomy (`js/game/matcher.js`, `js/game/lexique-*.js`) : jamais de chargemen
 
 ## Plans
 
+- **Portraits en rectangles** (idée de Théo, 13/11/2026) : d'abord un **essai sur une dizaine** de portraits,
+  que Théo juge, avant de refaire les 521. Les sources ne sont plus sur le disque (`f3_dl.py` les
+  retélécharge) ; `portrait.py` découpe un carré et trace un double cercle, et les `coupe` de
+  `reglages.json` sont des carrés : tout est à adapter et à revoir (`revue2.py`), images génériques
+  comprises. Les cadres du jeu étant maintenant grands, en profiter pour monter la définition (512 px au
+  lieu de 256). La planche du chapitre 02 (`PLANCHES` de `js/menu.js`) utilise trois portraits.
 - Les quatre modes annoncés ; il faudra des citations pour « Qui a dit ça ? ».
 - « Chronologie » : variantes possibles à discuter avec Théo (période en années libres, dynasties ou
   successions de souverains, 6 à 8 blocs, score par ordre relatif).

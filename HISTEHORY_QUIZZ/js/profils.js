@@ -13,7 +13,9 @@
 
    Statistiques d'un joueur (« profil ») — à enrichir avec les modes de jeu :
      { historique: [ { date, mode, titre, score, total, tempsMs } ]  (récentes d'abord),
-       totaux:     { parties, tempsMs, bonnes, questions } }
+       totaux:     { parties, tempsMs, bonnes, questions },
+       records:    { 'premier.facile': 12, … } }  (meilleur score par clé : « <mode>.<réglage> »)
+   Les clés de records ne changent plus une fois publiées (CLAUDE.md : identifiants stables).
    Rien n'est encore publié pour les autres joueurs (pas de classements). L'interface (bouton de
    compte, fenêtre du compte) est dans js/compte.js.
    ========================================================================== */
@@ -34,22 +36,34 @@
   /* ---------- Statistiques vides et complétées ---------- */
 
   const totauxVides = () => ({ parties: 0, tempsMs: 0, bonnes: 0, questions: 0 });
-  const profilVide = () => ({ historique: [], totaux: totauxVides() });
+  const profilVide = () => ({ historique: [], totaux: totauxVides(), records: {} });
+
+  // Records : des nombres entiers positifs seulement (le reste est ignoré)
+  function completerRecords(r) {
+    const propres = {};
+    if (r && typeof r === 'object') {
+      Object.keys(r).forEach((k) => { const n = Math.round(+r[k]); if (n > 0) propres[k] = n; });
+    }
+    return propres;
+  }
 
   // Données lues (ou reçues du serveur) : on complète ce qui manque plutôt que de tout refuser
   function completerProfil(p) {
     p = p && typeof p === 'object' ? p : {};
     return {
       historique: Array.isArray(p.historique) ? p.historique.slice(0, MAX_HISTORIQUE) : [],
-      totaux: Object.assign(totauxVides(), p.totaux || {})
+      totaux: Object.assign(totauxVides(), p.totaux || {}),
+      records: completerRecords(p.records)
     };
   }
 
-  // Ajoute les statistiques de source à cible (parties jouées hors ligne)
+  // Ajoute les statistiques de source à cible (parties jouées hors ligne) ; un record garde le meilleur
   function fusionner(cible, source) {
     cible.historique = cible.historique.concat(source.historique)
       .sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, MAX_HISTORIQUE);
     Object.keys(cible.totaux).forEach((k) => { cible.totaux[k] += source.totaux[k] || 0; });
+    cible.records = cible.records || {};
+    Object.keys(source.records || {}).forEach((k) => { cible.records[k] = Math.max(cible.records[k] || 0, source.records[k]); });
     return cible;
   }
 
@@ -138,19 +152,24 @@
   /* ---------- Parties ---------- */
 
   /* Enregistre une partie terminée pour le joueur courant (appelé par les modes de jeu).
-     p : { mode, titre, score, total, tempsMs } */
+     p : { mode, titre, score, total, tempsMs, record }
+     record (facultatif) : clé du record que ce score peut battre (ex. 'premier.facile') */
   function enregistrerPartie(p) {
     const pr = courant();
     pr.historique.unshift({ date: new Date().toISOString(), mode: p.mode, titre: p.titre, score: p.score, total: p.total, tempsMs: p.tempsMs });
     if (pr.historique.length > MAX_HISTORIQUE) pr.historique.length = MAX_HISTORIQUE;
     const t = pr.totaux;
     t.parties++; t.tempsMs += p.tempsMs; t.bonnes += p.score; t.questions += p.total;
+    if (p.record && p.score > (pr.records[p.record] || 0)) pr.records[p.record] = p.score;
     modifie();
   }
 
+  // Le record du joueur courant pour une clé (0 s'il n'en a pas)
+  const record = (cle) => courant().records[cle] || 0;
+
   function statistiques() {
     const p = courant();
-    return { historique: p.historique, totaux: Object.assign({}, p.totaux) };
+    return { historique: p.historique, totaux: Object.assign({}, p.totaux), records: Object.assign({}, p.records) };
   }
 
   /* ---------- Démarrage ---------- */
@@ -173,7 +192,7 @@
     effacerErreur: () => { if (C) C.effacerErreur(); },
     pret,
     // statistiques
-    enregistrerPartie, statistiques,
+    enregistrerPartie, statistiques, record,
     stockageDisponible: () => stockageOk,
     surChangement: (f) => abonnes.push(f),
     LONGUEUR_NOM, MDP_MIN

@@ -1,0 +1,288 @@
+/* ==========================================================================
+   Histehory Quizz — mode « Qui est venu en premier ? » (js/modes/premier.js)
+   Réutilise les variables, boutons, écrans de configuration et de fin, la barre et le pied de partie, et
+   les filtres en cases de css/style.css (dont l'interrupteur « Tout / Aucun » et les cartes des
+   périodes). Chargé après style.css.
+   Préphase : période (quatre cartes cumulables) et difficulté (trois cartes, un seul choix, coché).
+   Partie : deux grands cadres au milieu de l'écran, même principe que les rectangles de la page
+   d'accueil ; la consigne, fixe, est dans la barre du haut. Fin : la série, le record, l'erreur.
+   ========================================================================== */
+
+/* ---------- Préphase ---------- */
+.premier-config { width: min(52rem, 100%); padding: 1.5rem 1.8rem 1.4rem; }
+.premier-config h1 { display: flex; align-items: center; justify-content: center; gap: .7rem; margin: 0; }
+.premier-config__icone { font-size: 2.1rem; line-height: 1; filter: drop-shadow(0 3px 6px rgba(0, 0, 0, .5)); }
+.premier-config__tete p { margin-top: .55rem; color: var(--ink-2); text-align: justify; text-align-last: center; hyphens: auto; }
+.premier-config .chrono-groupe { margin-top: 1.15rem; }
+.premier-config .chrono-groupe__tete { align-items: center; height: 1.6rem; margin-bottom: .55rem; }
+.premier-config .chrono-groupe__tete .config__titre { margin: 0; }
+
+/* Les cases : allumées en ambre, éteintes en sourdine (comme « Trouver la date ») */
+.premier-config .puce { position: relative; align-items: center; border-width: 1.5px; }
+.premier-config .puce__icone { line-height: 1; transition: opacity .15s ease, filter .15s ease; }
+.premier-config .puce:not(.is-active) .puce__icone { opacity: .5; filter: grayscale(.7); }
+.premier-config .puce.is-active {
+  border-color: var(--accent);
+  background: linear-gradient(160deg, rgba(245, 158, 11, .24), rgba(245, 158, 11, .08));
+  box-shadow: 0 0 16px -7px rgba(245, 158, 11, .8);
+  color: var(--ink);
+}
+/* Compteurs de largeur fixe (jusqu'à 3 chiffres) : rien ne bouge quand les nombres changent */
+.premier-config .puce__n { min-width: 2.1rem; padding: 0 .3rem; }
+
+/* Difficulté : trois cartes sur une ligne (nom, aide, nombre), la choisie cochée */
+.premier-niveaux { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; }
+.puce--niveau { grid-template-columns: minmax(0, 1fr) auto; min-height: 3.3rem; }
+.premier-config .puce--niveau.is-active::after {
+  content: '✓';
+  position: absolute;
+  top: -.5rem;
+  right: -.45rem;
+  display: grid;
+  place-items: center;
+  width: 1.2rem;
+  height: 1.2rem;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 0 2px #1a130a;
+  color: var(--accent-texte);
+  font-size: .7rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.premier-config .chrono-etat { margin-top: 1.1rem; min-height: 1.35em; font-weight: 500; }
+.premier-config .config__actions { margin-top: 1rem; }
+#premier-commencer:not(:disabled) { box-shadow: 0 3px 0 var(--accent-ombre), 0 0 26px -6px rgba(245, 158, 11, .75); }
+
+@media (max-height: 700px) and (min-width: 761px) {
+  #screen-premier-config { padding-top: 3.8rem; }
+  .premier-config { padding-top: 1.1rem; padding-bottom: 1.1rem; }
+  .premier-config .chrono-groupe { margin-top: .9rem; }
+}
+@media (max-width: 640px) {
+  .premier-config { padding: 1.2rem 1rem; }
+  .premier-config h1 { font-size: 1.5rem; }
+  .premier-niveaux { grid-template-columns: minmax(0, 1fr); }
+}
+
+/* ---------- Partie ---------- */
+.premier-jeu { max-width: 68rem; }
+/* La barre : « Quitter » | la consigne, fixe, au centre | record et score */
+.premier-jeu .jeu-barre { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
+.premier-jeu .jeu-barre > .btn-link { justify-self: start; }
+.premier-jeu .jeu-barre__droite { justify-self: end; }
+.premier-consigne { color: var(--accent-pale); }
+.premier-record { color: var(--muted); font-size: .9rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.premier-record.is-battu { color: var(--accent-clair); animation: pop .35s ease; }
+.premier-jeu .jeu-barre__score { color: var(--ink); font-weight: 700; white-space: nowrap; }
+
+/* La scène : les deux cadres et le pied, ensemble au milieu de l'écran. Les cadres sont aussi grands que
+   la place le permet, avec une limite (les portraits sont des images de 256 px) */
+.premier-scene { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .9rem; }
+.duel {
+  flex: 0 1 44rem;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(.8rem, 3vw, 2rem);
+  width: 100%;
+  max-width: 66rem;
+}
+.premier-scene .jeu-pied { flex: none; width: 100%; }
+
+/* Un cadre : couleur du jeu dégradée, lueur d'accent dans un coin (en miroir d'un cadre à l'autre). Le
+   portrait est le héros, centré, en traits clairs ; le nom est posé dessous sur un cartouche, comme la
+   plaque d'une vitrine de musée, où la date s'inscrit (« Né en ? » tant qu'on ne la connaît pas). */
+.cadre {
+  --jeu-couleur: #33230d;
+  --jeu-accent: #f59e0b;
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .8rem;
+  min-height: 0;
+  padding: clamp(.8rem, 2vw, 1.3rem);
+  border: 2px solid rgba(255, 255, 255, .14);
+  border-radius: 22px;
+  background: linear-gradient(165deg, rgba(255, 255, 255, .13), rgba(0, 0, 0, .22)), var(--jeu-couleur);
+  color: #fff;
+  text-align: center;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, filter .3s ease;
+}
+.cadre::after {
+  content: '';
+  position: absolute;
+  right: -28%;
+  top: -32%;
+  width: 72%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--jeu-accent), transparent 70%);
+  opacity: .24;
+  pointer-events: none;
+  z-index: -1;
+}
+#premier-a::after { right: auto; left: -28%; }
+.cadre__portrait {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  background: var(--portrait, none) center / contain no-repeat;
+  /* « screen » : le trait blanc éclaire la couleur du fond au lieu de s'y fondre ; teinte ivoire */
+  mix-blend-mode: screen;
+  filter: sepia(.45) brightness(.92);
+  opacity: .9;
+  transition: opacity .3s ease, transform .3s ease;
+}
+.cadre__cartouche {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: .15rem;
+  width: min(100%, 28rem);
+  padding: .55rem .9rem .6rem;
+  border: 1px solid rgba(245, 158, 11, .38);
+  border-radius: 12px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, .28), rgba(0, 0, 0, .46));
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+}
+.cadre__nom { font-family: var(--serif); font-size: clamp(1.1rem, 2.6vw, 1.6rem); font-weight: 800; line-height: 1.15; }
+.cadre__info { font-size: clamp(.74rem, 1.6vw, .9rem); color: rgba(255, 255, 255, .86); }
+.cadre__date {
+  margin-top: .2rem;
+  font-family: var(--serif);
+  font-size: clamp(1.05rem, 2.6vw, 1.45rem);
+  font-weight: 700;
+  color: var(--accent-clair);
+  font-variant-numeric: tabular-nums;
+}
+.cadre__date--inconnue { color: rgba(255, 255, 255, .42); }
+.cadre__badge {
+  position: absolute;
+  top: .7rem;
+  left: .7rem;
+  display: grid;
+  place-items: center;
+  width: 2.3rem;
+  height: 2.3rem;
+  border-radius: 50%;
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #fff;
+}
+.cadre__badge:empty { display: none; }
+.cadre--bon .cadre__badge { background: #16a34a; animation: pop .35s ease; }
+.cadre--faux .cadre__badge { background: #dc2626; animation: pop .35s ease; }
+
+/* Survol : souris seulement. Sur écran tactile, l'état resterait accroché au cadre de la manche suivante. */
+@media (hover: hover) {
+  .cadre:not(:disabled):hover { transform: scale(1.02); border-color: var(--jeu-accent); box-shadow: 0 22px 46px rgba(0, 0, 0, .42); }
+  .cadre:not(:disabled):hover .cadre__portrait { opacity: 1; transform: scale(1.03); }
+}
+.cadre:not(:disabled):focus-visible { border-color: var(--jeu-accent); outline: 2px solid var(--jeu-accent); outline-offset: 3px; }
+.cadre:not(:disabled):active { transform: scale(.99); }
+.cadre:disabled { cursor: default; }
+.cadre--bon { border-color: var(--green); box-shadow: 0 0 0 3px rgba(74, 222, 128, .35), var(--shadow); }
+.cadre--bon .cadre__date { color: #bbf7d0; }
+.cadre--faux { border-color: #f87171; box-shadow: 0 0 0 3px rgba(248, 113, 113, .35), var(--shadow); }
+.cadre--faux .cadre__date { color: #fecaca; }
+.cadre--autre { filter: brightness(.75) saturate(.8); }
+/* Le nouveau venu entre en fondu (celui qui reste ne bouge pas) */
+.cadre--arrive { animation: arrivee .45s ease both; }
+@keyframes arrivee { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
+
+/* Écran plus haut que large (téléphone, tablette debout) : côte à côte, les cadres seraient de hautes
+   colonnes. Ils s'empilent : cartouche à gauche, portrait à droite, à pleine hauteur. */
+@media (max-aspect-ratio: 1/1) {
+  .duel { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+  .cadre { flex-direction: row-reverse; align-items: stretch; }
+  .cadre__portrait { flex: 0 0 48%; }
+  .cadre__cartouche { flex: 1; align-self: center; align-items: flex-start; width: auto; text-align: left; }
+  #premier-a::after { left: auto; right: -28%; }
+  .cadre__badge { top: .6rem; left: auto; right: .6rem; }
+}
+/* Téléphone : la consigne passe sous « Quitter » et le score */
+@media (max-width: 560px) {
+  .premier-jeu .jeu-barre { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'quitter droite' 'consigne consigne'; row-gap: .25rem; }
+  .premier-jeu .jeu-barre > .btn-link { grid-area: quitter; }
+  .premier-jeu .jeu-barre__droite { grid-area: droite; }
+  .premier-consigne { grid-area: consigne; justify-self: center; }
+}
+
+/* Pied : l'aide (première manche), le verdict, la mini-frise de l'écart, « Suivant » */
+.frise { display: flex; align-items: center; isolation: isolate; font-family: var(--serif); font-weight: 700; font-variant-numeric: tabular-nums; }
+.frise__debut, .frise__fin { color: var(--ink); white-space: nowrap; }
+.frise__debut::after, .frise__fin::before {
+  content: '';
+  display: inline-block;
+  width: .55rem;
+  height: .55rem;
+  margin: 0 .35rem;
+  border-radius: 50%;
+  background: var(--accent);
+  vertical-align: middle;
+}
+.frise__trait {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  min-width: 7rem;
+  font-family: system-ui, sans-serif;
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--accent-clair);
+}
+.frise__trait::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px solid var(--accent); z-index: -1; }
+.frise__ecart { padding: 0 .4rem; background: var(--bg); white-space: nowrap; }
+#premier-aide { margin: 0; }
+#premier-suite { position: relative; overflow: hidden; isolation: isolate; }
+#premier-suite.btn-auto::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 255, 255, .35);
+  transform-origin: left;
+  animation: remplir var(--delai, 1.8s) linear forwards;
+  z-index: -1;
+}
+@media (max-width: 640px) { .frise__trait { min-width: 4.5rem; } }
+
+/* ---------- Fin : la série, le record, l'erreur ---------- */
+.premier-fin { width: min(36rem, 100%); }
+.premier-fin .fin__score { margin-top: .5rem; font-size: 3.6rem; }
+.premier-fin__unite { color: var(--ink-2); font-weight: 600; }
+.premier-fin__record {
+  display: inline-block;
+  margin-top: .75rem;
+  padding: .2rem .85rem;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .06);
+  color: var(--ink-2);
+  font-weight: 700;
+}
+.premier-fin__record.is-battu { background: rgba(245, 158, 11, .18); color: var(--accent-clair); box-shadow: 0 0 18px -6px rgba(245, 158, 11, .7); }
+.premier-fin .fin__message { margin-top: .7rem; }
+.premier-fin__erreur {
+  margin-top: .8rem;
+  padding: .55rem .9rem;
+  border: 1px solid rgba(248, 113, 113, .3);
+  border-left: 3px solid #f87171;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, .03);
+  color: var(--ink-2);
+  text-align: justify;
+  text-align-last: center;
+  hyphens: auto;
+}
+.premier-fin .fin__detail { margin-top: .6rem; }
+
+@media (prefers-reduced-motion: reduce) {
+  .cadre, .cadre__portrait, .premier-config .puce__icone { transition: none; }
+  .cadre:not(:disabled):hover, .cadre:not(:disabled):hover .cadre__portrait { transform: none; }
+  .cadre--arrive, .cadre__badge, .premier-record.is-battu, #premier-suite.btn-auto::after { animation: none !important; }
+}

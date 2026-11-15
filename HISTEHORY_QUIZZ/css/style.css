@@ -232,7 +232,7 @@ body[data-ecran$="-jeu"] .jeux-coin { display: none; }
 .choix__aide { font-size: .74rem; font-weight: 500; color: var(--muted); text-align: center; }
 .config__actions { display: flex; flex-wrap: wrap; justify-content: center; gap: .6rem; margin-top: 1.6rem; }
 
-/* ---------- Préphase : filtres en cases, croisés (« Chronologie », « Trouver la date ») ---------- */
+/* ---------- Préphase : filtres en cases, croisés (« Chronologie », « Trouver la date », « Qui est venu en premier ? ») ---------- */
 .config--large { width: min(46rem, 100%); }
 .chrono-groupe__tete { display: flex; align-items: baseline; justify-content: space-between; gap: .8rem; }
 .chrono-groupe__tete .config__titre { margin-bottom: .45rem; }
@@ -269,6 +269,59 @@ body[data-ecran$="-jeu"] .jeux-coin { display: none; }
 .puce.is-active .puce__n { background: rgba(245, 158, 11, .25); color: var(--accent-clair); }
 .chrono-etat { margin-top: 1.2rem; text-align: center; font-size: .92rem; font-weight: 600; color: var(--ink-2); }
 .chrono-etat--non { color: var(--red); }
+
+/* « Tout ◯ Aucun » : les deux mots et, entre eux, un interrupteur à trois positions (tout coché à gauche,
+   rien à droite, entre les deux au milieu ; data-etat : tout, partiel, aucun). « Trouver la date », « Qui est
+   venu en premier ? » */
+.bascule { align-items: center; gap: .45rem; }
+.bascule .btn-link { padding: 0; font-size: .8rem; line-height: 1.6rem; }
+.bascule__interrupteur {
+  position: relative;
+  width: 1.9rem;
+  height: 1.05rem;
+  padding: 0;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  background: var(--champ);
+  transition: background-color .15s ease, border-color .15s ease;
+}
+.bascule__interrupteur::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: .12rem;
+  width: .72rem;
+  height: .72rem;
+  border-radius: 50%;
+  background: var(--ink-2);
+  transform: translateY(-50%);
+  transition: left .15s ease, background-color .15s ease;
+}
+.bascule__interrupteur[data-etat="tout"] { border-color: var(--accent); background: var(--accent); }
+.bascule__interrupteur[data-etat="tout"]::after { background: #fff8eb; }
+.bascule__interrupteur[data-etat="partiel"]::after { left: calc(50% - .36rem); }
+.bascule__interrupteur[data-etat="aucun"]::after { left: calc(100% - .84rem); }
+.bascule__interrupteur:hover { border-color: var(--accent); }
+.bascule__interrupteur:focus-visible { outline: 0; box-shadow: 0 0 0 3px var(--anneau); }
+
+/* Cases en cartes (les quatre périodes…) : emoji, nom, aide, nombre ; deux par ligne */
+.puces-cartes { flex: 1; display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; }
+.puce--carte {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: .7rem;
+  padding: .55rem .75rem;
+  border-radius: 14px;
+  text-align: left;
+}
+/* (sélecteur renforcé : il passe avant les petites icônes des cases rondes, « .date-config .puce__icone ») */
+.puces-cartes .puce--carte .puce__icone { font-size: 1.85rem; filter: drop-shadow(0 3px 5px rgba(0, 0, 0, .5)); }
+.puce__texte { display: flex; flex-direction: column; gap: .1rem; min-width: 0; }
+.puce--carte .puce__nom { font-size: .95rem; line-height: 1.2; color: var(--ink-2); }
+.puce--carte.is-active .puce__nom { color: var(--ink); }
+.puce--carte .puce__aide { font-size: .74rem; }
+@media (max-width: 520px) { .puces-cartes { grid-template-columns: minmax(0, 1fr); } }
 
 .fin { text-align: center; }
 .fin__score { margin-top: .8rem; font-family: var(--serif); font-size: 3.2rem; font-weight: 700; color: var(--accent-clair); line-height: 1.1; }
@@ -307,183 +360,22 @@ body[data-ecran$="-jeu"] .jeux-coin { display: none; }
   transition: width .35s ease;
 }
 
-/* La consigne : EN PREMIER (vert d'eau, flèche vers la gauche = plus tôt sur la frise) et EN DERNIER (orange,
-   flèche vers la droite) n'ont ni la même couleur ni la même flèche ; elle « saute » à chaque manche. */
+/* L'intitulé d'une manche (« Chronologie ») et l'aide de la première question */
 .question-bloc { text-align: center; }
 .question { font-family: var(--serif); font-size: clamp(1.4rem, 4.2vw, 2.2rem); }
-.question__sens {
-  display: inline-block;
-  padding: 0 .5rem;
-  border-radius: 10px;
-  font-weight: 800;
-  text-transform: uppercase;
-  letter-spacing: .03em;
-  white-space: nowrap;
-}
-.question__sens[data-sens="avant"] { background: #2dd4bf; color: #04201c; }
-.question__sens[data-sens="apres"] { background: var(--accent-2); color: #fff; }
-.question__sens--anime { animation: pop .4s ease; }
 @keyframes pop { 0% { transform: scale(.7); opacity: 0; } 60% { transform: scale(1.12); opacity: 1; } 100% { transform: scale(1); } }
 .aide-jeu { margin-top: .2rem; font-size: .85rem; color: var(--muted); }
 
-/* Les deux cadres : même principe que les rectangles de la page d'accueil (ACCUEIL/accueil.css) —
-   couleur du jeu dégradée, lueur d'accent dans un coin (en miroir d'un cadre à l'autre). Le portrait
-   est le héros, centré, en traits clairs bien présents ; le nom est posé dessous sur un cartouche,
-   comme la plaque d'une vitrine de musée, où la date vient s'inscrire après la réponse. */
-.duel { flex: 1; min-height: 0; display: grid; grid-template-columns: 1fr 1fr; gap: clamp(.6rem, 2.5vw, 1.4rem); }
-.cadre {
-  --jeu-couleur: #33230d;
-  --jeu-accent: #f59e0b;
-  position: relative;
-  isolation: isolate;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: .7rem;
-  min-height: 0;
-  padding: clamp(.7rem, 2vw, 1.1rem);
-  border: 2px solid rgba(255, 255, 255, .14);
-  border-radius: 22px;
-  background: linear-gradient(165deg, rgba(255, 255, 255, .13), rgba(0, 0, 0, .22)), var(--jeu-couleur);
-  color: #fff;
-  text-align: center;
-  overflow: hidden;
-  box-shadow: var(--shadow);
-  transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, filter .3s ease;
-}
-.cadre::after {
-  content: '';
-  position: absolute;
-  right: -28%;
-  top: -32%;
-  width: 72%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--jeu-accent), transparent 70%);
-  opacity: .24;
-  pointer-events: none;
-  z-index: -1;
-}
-#premier-a::after { right: auto; left: -28%; }
-.cadre__portrait {
-  flex: 1;
-  min-height: 0;
-  width: 100%;
-  background: var(--portrait, none) center / contain no-repeat;
-  /* « screen » : le trait blanc éclaire la couleur du fond au lieu de s'y fondre ; teinte ivoire */
-  mix-blend-mode: screen;
-  filter: sepia(.45) brightness(.92);
-  opacity: .9;
-  transition: opacity .3s ease, transform .3s ease;
-}
-.cadre__cartouche {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: .15rem;
-  width: min(100%, 26rem);
-  padding: .5rem .9rem .55rem;
-  border: 1px solid rgba(245, 158, 11, .38);
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, .28), rgba(0, 0, 0, .46));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
-}
-.cadre__nom { font-family: var(--serif); font-size: clamp(1.05rem, 2.6vw, 1.5rem); font-weight: 800; line-height: 1.15; }
-.cadre__info { font-size: clamp(.74rem, 1.6vw, .88rem); color: rgba(255, 255, 255, .86); }
-.cadre__date {
-  margin-top: .2rem;
-  font-family: var(--serif);
-  font-size: clamp(1.05rem, 2.6vw, 1.4rem);
-  font-weight: 700;
-  color: var(--accent-clair);
-  font-variant-numeric: tabular-nums;
-}
-.cadre__badge {
-  position: absolute;
-  top: .7rem;
-  left: .7rem;
-  display: grid;
-  place-items: center;
-  width: 2.3rem;
-  height: 2.3rem;
-  border-radius: 50%;
-  font-size: 1.25rem;
-  font-weight: 900;
-  color: #fff;
-}
-.cadre__badge:empty { display: none; }
-.cadre--bon .cadre__badge { background: #16a34a; animation: pop .35s ease; }
-.cadre--faux .cadre__badge { background: #dc2626; animation: pop .35s ease; }
-
-/* Survol : souris seulement. Sur écran tactile, l'état resterait accroché au cadre de la manche suivante. */
-@media (hover: hover) {
-  .cadre:not(:disabled):hover { transform: scale(1.02); border-color: var(--jeu-accent); box-shadow: 0 22px 46px rgba(0, 0, 0, .42); }
-  .cadre:not(:disabled):hover .cadre__portrait { opacity: 1; transform: scale(1.03); }
-}
-.cadre:not(:disabled):focus-visible { border-color: var(--jeu-accent); outline: 2px solid var(--jeu-accent); outline-offset: 3px; }
-.cadre:not(:disabled):active { transform: scale(.99); }
-.cadre:disabled { cursor: default; }
-.cadre--bon { border-color: var(--green); box-shadow: 0 0 0 3px rgba(74, 222, 128, .35), var(--shadow); }
-.cadre--bon .cadre__date { color: #bbf7d0; }
-.cadre--faux { border-color: #f87171; box-shadow: 0 0 0 3px rgba(248, 113, 113, .35), var(--shadow); }
-.cadre--faux .cadre__date { color: #fecaca; }
-.cadre--autre { filter: brightness(.75) saturate(.8); }
-
-/* Écran plus haut que large (téléphone, tablette debout) : côte à côte, les cadres seraient de hautes
-   colonnes. Ils s'empilent : cartouche à gauche, portrait à droite, à pleine hauteur. */
-@media (max-aspect-ratio: 1/1) {
-  .duel { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
-  .cadre { flex-direction: row-reverse; align-items: stretch; }
-  .cadre__portrait { flex: 0 0 48%; }
-  .cadre__cartouche { flex: 1; align-self: center; align-items: flex-start; width: auto; text-align: left; }
-  #premier-a::after { left: auto; right: -28%; }
-  .cadre__badge { top: .6rem; left: auto; right: .6rem; }
-}
-
-/* Pied : verdict, mini-frise de l'écart, « Suivant » (qui se remplit quand la suite arrive seule) */
+/* Pied : verdict, puis « Suivant », qui se remplit (animation « remplir ») quand la suite arrive seule.
+   Les cadres et la mini-frise de « Qui est venu en premier ? » sont dans css/premier.css. */
 .jeu-pied { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: .45rem 1.1rem; min-height: 3rem; }
 .verdict { font-weight: 800; }
 .verdict--bon { color: var(--green); }
 .verdict--faux { color: var(--red); }
-.frise { display: flex; align-items: center; isolation: isolate; font-family: var(--serif); font-weight: 700; font-variant-numeric: tabular-nums; }
-.frise__debut, .frise__fin { color: var(--ink); white-space: nowrap; }
-.frise__debut::after, .frise__fin::before {
-  content: '';
-  display: inline-block;
-  width: .55rem;
-  height: .55rem;
-  margin: 0 .35rem;
-  border-radius: 50%;
-  background: var(--accent);
-  vertical-align: middle;
-}
-.frise__trait {
-  position: relative;
-  display: flex;
-  justify-content: center;
-  min-width: 7rem;
-  font-family: system-ui, sans-serif;
-  font-size: .78rem;
-  font-weight: 700;
-  color: var(--accent-clair);
-}
-.frise__trait::before { content: ''; position: absolute; left: 0; right: 0; top: 50%; border-top: 2px solid var(--accent); z-index: -1; }
-.frise__ecart { padding: 0 .4rem; background: var(--bg); white-space: nowrap; }
-#premier-suite { position: relative; overflow: hidden; isolation: isolate; }
-#premier-suite.btn-auto::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  background: rgba(255, 255, 255, .35);
-  transform-origin: left;
-  animation: remplir var(--delai, 1.8s) linear forwards;
-  z-index: -1;
-}
 @keyframes remplir { from { transform: scaleX(0); } to { transform: scaleX(1); } }
-@media (max-width: 640px) { .jeu-pied { gap: .35rem .8rem; } .frise__trait { min-width: 4.5rem; } }
+@media (max-width: 640px) { .jeu-pied { gap: .35rem .8rem; } }
 
 @media (prefers-reduced-motion: reduce) {
-  .btn, .cadre, .cadre__portrait, .jeu-progres > div, .puce { transition: none; }
-  .cadre:not(:disabled):hover, .cadre:not(:disabled):hover .cadre__portrait { transform: none; }
-  .question__sens--anime, .cadre__badge, .jeu-barre__serie, #premier-suite.btn-auto::after { animation: none !important; }
+  .btn, .jeu-progres > div, .puce, .bascule__interrupteur, .bascule__interrupteur::after { transition: none; }
+  .jeu-barre__serie { animation: none !important; }
 }
