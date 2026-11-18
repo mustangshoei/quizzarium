@@ -4,8 +4,8 @@
    les filtres en cases de css/style.css (dont l'interrupteur « Tout / Aucun » et les cartes des
    périodes). Chargé après style.css.
    Préphase : période (quatre cartes cumulables) et difficulté (trois cartes, un seul choix, coché).
-   Partie : deux grands cadres au milieu de l'écran, même principe que les rectangles de la page
-   d'accueil ; la consigne, fixe, est dans la barre du haut. Fin : la série, le record, l'erreur.
+   Partie : deux grands cadres en forme de portrait au milieu de l'écran, un losange « VS » entre eux ;
+   la consigne, fixe, en capitales dans la barre du haut. Fin : la série, le record, l'erreur.
    ========================================================================== */
 
 /* ---------- Préphase ---------- */
@@ -68,72 +68,108 @@
 
 /* ---------- Partie ---------- */
 .premier-jeu { max-width: 68rem; }
-/* La barre : « Quitter » | la consigne, fixe, au centre | record et score */
+/* La barre : « Quitter » (pastille) | la consigne, en capitales, au centre | record et score (pastille) */
 .premier-jeu .jeu-barre { display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); }
-.premier-jeu .jeu-barre > .btn-link { justify-self: start; }
+.premier-jeu .jeu-barre > .btn-link {
+  justify-self: start;
+  padding: .35rem .85rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 236, 200, .05);
+}
+.premier-jeu .jeu-barre > .btn-link:hover { border-color: var(--line-2); }
 .premier-jeu .jeu-barre__droite { justify-self: end; }
-.premier-consigne { color: var(--accent-pale); }
+.premier-consigne {
+  font-family: var(--serif);
+  font-size: clamp(1rem, 2.1vw, 1.35rem);
+  font-weight: 500;
+  letter-spacing: .14em;
+  color: var(--ink);
+}
 .premier-record { color: var(--muted); font-size: .9rem; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .premier-record.is-battu { color: var(--accent-clair); animation: pop .35s ease; }
-.premier-jeu .jeu-barre__score { color: var(--ink); font-weight: 700; white-space: nowrap; }
+.premier-jeu .jeu-barre__score {
+  padding: .3rem .9rem;
+  border: 1px solid var(--line-2);
+  border-radius: 999px;
+  color: var(--ink-2);
+  font-weight: 500;
+  white-space: nowrap;
+}
+.premier-jeu .jeu-barre__score strong { color: var(--ink); font-weight: 800; }
 
-/* La scène : les deux cadres et le pied, ensemble au milieu de l'écran. Les cadres sont aussi grands que
-   la place le permet, avec une limite (les portraits sont des images de 256 px) */
+/* La scène : les deux cadres, le losange « VS » entre eux, et le pied, ensemble au milieu de l'écran.
+   Un cadre a la forme d'un portrait (3:4 + le cartouche) : sa largeur suit la hauteur de l'écran
+   (--cadre-l), avec une limite (les portraits sont des images de 384 x 512). */
 .premier-scene { flex: 1; min-height: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: .9rem; }
 .duel {
+  --cadre-l: clamp(14rem, calc(75dvh - 15rem), 27rem);
   flex: 0 1 44rem;
   min-height: 0;
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: clamp(.8rem, 3vw, 2rem);
+  grid-template-columns: minmax(0, var(--cadre-l)) auto minmax(0, var(--cadre-l));
+  justify-content: center;
+  gap: clamp(.8rem, 3vw, 2.4rem);
   width: 100%;
-  max-width: 66rem;
 }
 .premier-scene .jeu-pied { flex: none; width: 100%; }
 
-/* Un cadre : couleur du jeu dégradée, lueur d'accent dans un coin (en miroir d'un cadre à l'autre). Le
-   portrait est le héros, centré, en traits clairs ; le nom est posé dessous sur un cartouche, comme la
-   plaque d'une vitrine de musée, où la date s'inscrit (« Né en ? » tant qu'on ne la connaît pas). */
+/* Le losange « VS » */
+.duel__vs {
+  position: relative;
+  z-index: 1;
+  align-self: center;
+  display: grid;
+  place-items: center;
+  width: 3.6rem;
+  height: 3.6rem;
+  font-family: var(--serif);
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--accent-clair);
+  letter-spacing: .04em;
+}
+.duel__vs::before {
+  content: '';
+  position: absolute;
+  inset: .55rem;
+  z-index: -1;
+  border: 1.5px solid rgba(245, 158, 11, .6);
+  border-radius: 6px;
+  background: linear-gradient(135deg, #2e2213, #1a130a);
+  box-shadow: 0 0 0 4px rgba(245, 158, 11, .07), 0 0 22px -4px rgba(245, 158, 11, .45);
+  transform: rotate(45deg);
+}
+
+/* Un cadre : brun sombre, liseré doré, une lueur douce en haut. Le portrait (traits clairs, double
+   filet) est le héros ; dessous, un filet doré, puis le nom, l'info et la date (« Né en ? » dans une
+   pastille en pointillés tant qu'on ne la connaît pas, en doré une fois connue). */
 .cadre {
-  --jeu-couleur: #33230d;
-  --jeu-accent: #f59e0b;
   position: relative;
   isolation: isolate;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: .8rem;
+  gap: .75rem;
   min-height: 0;
-  padding: clamp(.8rem, 2vw, 1.3rem);
-  border: 2px solid rgba(255, 255, 255, .14);
-  border-radius: 22px;
-  background: linear-gradient(165deg, rgba(255, 255, 255, .13), rgba(0, 0, 0, .22)), var(--jeu-couleur);
-  color: #fff;
+  padding: clamp(.9rem, 2vw, 1.3rem) clamp(.9rem, 2vw, 1.3rem) clamp(.8rem, 1.6vw, 1.1rem);
+  border: 1px solid rgba(245, 158, 11, .28);
+  border-radius: 14px;
+  background:
+    radial-gradient(120% 55% at 50% 0%, rgba(245, 158, 11, .1), transparent 65%),
+    linear-gradient(180deg, #2a1f12, #1a130b);
+  color: var(--ink);
   text-align: center;
   overflow: hidden;
-  box-shadow: var(--shadow);
+  box-shadow: var(--shadow), inset 0 1px 0 rgba(255, 236, 200, .06);
   transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease, filter .3s ease;
 }
-.cadre::after {
-  content: '';
-  position: absolute;
-  right: -28%;
-  top: -32%;
-  width: 72%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  background: radial-gradient(circle, var(--jeu-accent), transparent 70%);
-  opacity: .24;
-  pointer-events: none;
-  z-index: -1;
-}
-#premier-a::after { right: auto; left: -28%; }
 .cadre__portrait {
   flex: 1;
   min-height: 0;
   width: 100%;
   background: var(--portrait, none) center / contain no-repeat;
-  /* « screen » : le trait blanc éclaire la couleur du fond au lieu de s'y fondre ; teinte ivoire */
+  /* « screen » : le trait blanc éclaire le fond au lieu de s'y fondre ; teinte ivoire */
   mix-blend-mode: screen;
   filter: sepia(.45) brightness(.92);
   opacity: .9;
@@ -143,29 +179,36 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: .15rem;
-  width: min(100%, 28rem);
-  padding: .55rem .9rem .6rem;
-  border: 1px solid rgba(245, 158, 11, .38);
-  border-radius: 12px;
-  background: linear-gradient(180deg, rgba(0, 0, 0, .28), rgba(0, 0, 0, .46));
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, .06);
+  gap: .2rem;
+  width: 100%;
+  padding-top: .8rem;
+  border-top: 1px solid rgba(245, 158, 11, .5);
 }
-.cadre__nom { font-family: var(--serif); font-size: clamp(1.1rem, 2.6vw, 1.6rem); font-weight: 800; line-height: 1.15; }
-.cadre__info { font-size: clamp(.74rem, 1.6vw, .9rem); color: rgba(255, 255, 255, .86); }
+.cadre__nom { font-family: var(--serif); font-size: clamp(1.1rem, 2.4vw, 1.55rem); font-weight: 700; line-height: 1.15; }
+.cadre__info { font-size: clamp(.72rem, 1.5vw, .86rem); color: rgba(246, 236, 219, .62); }
+/* Même boîte pour la date connue ou non : rien ne bouge quand elle s'inscrit */
 .cadre__date {
-  margin-top: .2rem;
+  align-self: stretch;
+  margin-top: .45rem;
+  padding: .3rem 1rem;
+  border: 1.5px dotted transparent;
+  border-radius: 999px;
   font-family: var(--serif);
-  font-size: clamp(1.05rem, 2.6vw, 1.45rem);
+  font-size: clamp(1.05rem, 2.4vw, 1.4rem);
   font-weight: 700;
   color: var(--accent-clair);
   font-variant-numeric: tabular-nums;
 }
-.cadre__date--inconnue { color: rgba(255, 255, 255, .42); }
+.cadre__date--inconnue {
+  border-color: rgba(251, 191, 36, .45);
+  background: rgba(255, 236, 200, .07);
+  color: rgba(246, 236, 219, .7);
+}
 .cadre__badge {
   position: absolute;
   top: .7rem;
   left: .7rem;
+  z-index: 1;
   display: grid;
   place-items: center;
   width: 2.3rem;
@@ -181,15 +224,20 @@
 
 /* Survol : souris seulement. Sur écran tactile, l'état resterait accroché au cadre de la manche suivante. */
 @media (hover: hover) {
-  .cadre:not(:disabled):hover { transform: scale(1.02); border-color: var(--jeu-accent); box-shadow: 0 22px 46px rgba(0, 0, 0, .42); }
-  .cadre:not(:disabled):hover .cadre__portrait { opacity: 1; transform: scale(1.03); }
+  .cadre:not(:disabled):hover {
+    transform: translateY(-3px);
+    border-color: rgba(251, 191, 36, .8);
+    box-shadow: 0 0 0 1px rgba(251, 191, 36, .3), 0 0 38px -6px rgba(245, 158, 11, .5), var(--shadow);
+  }
+  .cadre:not(:disabled):hover .cadre__portrait { opacity: 1; }
+  .cadre:not(:disabled):hover .cadre__date--inconnue { background: rgba(251, 191, 36, .14); }
 }
-.cadre:not(:disabled):focus-visible { border-color: var(--jeu-accent); outline: 2px solid var(--jeu-accent); outline-offset: 3px; }
+.cadre:not(:disabled):focus-visible { border-color: var(--accent-clair); outline: 2px solid var(--accent); outline-offset: 3px; }
 .cadre:not(:disabled):active { transform: scale(.99); }
 .cadre:disabled { cursor: default; }
-.cadre--bon { border-color: var(--green); box-shadow: 0 0 0 3px rgba(74, 222, 128, .35), var(--shadow); }
+.cadre--bon { border-color: var(--green); box-shadow: 0 0 0 2px rgba(74, 222, 128, .35), 0 0 34px -8px rgba(74, 222, 128, .5), var(--shadow); }
 .cadre--bon .cadre__date { color: #bbf7d0; }
-.cadre--faux { border-color: #f87171; box-shadow: 0 0 0 3px rgba(248, 113, 113, .35), var(--shadow); }
+.cadre--faux { border-color: #f87171; box-shadow: 0 0 0 2px rgba(248, 113, 113, .35), 0 0 34px -8px rgba(248, 113, 113, .5), var(--shadow); }
 .cadre--faux .cadre__date { color: #fecaca; }
 .cadre--autre { filter: brightness(.75) saturate(.8); }
 /* Le nouveau venu entre en fondu (celui qui reste ne bouge pas) */
@@ -197,21 +245,22 @@
 @keyframes arrivee { from { opacity: 0; transform: translateY(14px) scale(.97); } to { opacity: 1; transform: none; } }
 
 /* Écran plus haut que large (téléphone, tablette debout) : côte à côte, les cadres seraient de hautes
-   colonnes. Ils s'empilent : cartouche à gauche, portrait à droite, à pleine hauteur. */
+   colonnes. Ils s'empilent, le « VS » entre les deux : cartouche à gauche, portrait à droite. */
 @media (max-aspect-ratio: 1/1) {
-  .duel { grid-template-columns: 1fr; grid-template-rows: 1fr 1fr; }
+  .duel { grid-template-columns: minmax(0, 34rem); grid-template-rows: 1fr auto 1fr; gap: 0; }
+  .duel__vs { justify-self: center; width: 2.8rem; height: 2.8rem; margin: -.7rem 0; font-size: .95rem; }
   .cadre { flex-direction: row-reverse; align-items: stretch; }
-  .cadre__portrait { flex: 0 0 48%; }
-  .cadre__cartouche { flex: 1; align-self: center; align-items: flex-start; width: auto; text-align: left; }
-  #premier-a::after { left: auto; right: -28%; }
+  .cadre__portrait { flex: 0 0 46%; }
+  .cadre__cartouche { flex: 1; align-self: center; align-items: flex-start; width: auto; padding: 0 .8rem 0 0; border-top: 0; border-right: 1px solid rgba(245, 158, 11, .5); text-align: left; }
+  .cadre__date { align-self: flex-start; }
   .cadre__badge { top: .6rem; left: auto; right: .6rem; }
 }
 /* Téléphone : la consigne passe sous « Quitter » et le score */
 @media (max-width: 560px) {
-  .premier-jeu .jeu-barre { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'quitter droite' 'consigne consigne'; row-gap: .25rem; }
+  .premier-jeu .jeu-barre { grid-template-columns: auto minmax(0, 1fr); grid-template-areas: 'quitter droite' 'consigne consigne'; row-gap: .4rem; }
   .premier-jeu .jeu-barre > .btn-link { grid-area: quitter; }
   .premier-jeu .jeu-barre__droite { grid-area: droite; }
-  .premier-consigne { grid-area: consigne; justify-self: center; }
+  .premier-consigne { grid-area: consigne; justify-self: center; letter-spacing: .1em; }
 }
 
 /* Pied : l'aide (première manche), le verdict, la mini-frise de l'écart, « Suivant » */

@@ -82,7 +82,7 @@
         { id: 'pathologies', nom: 'Les pathologies', groupe: 'La langue médicale', variantes: ['Devinette', 'QCM'] },
         { id: 'termes-medicaux', nom: 'Les termes médicaux', groupe: 'La langue médicale', variantes: ['Devinette', 'QCM'] }
       ] },
-    { id: 'histehory', dossier: 'HISTEHORY_QUIZZ', nom: 'Histehory Quizz', icone: '📜', version: '2.2.0',
+    { id: 'histehory', dossier: 'HISTEHORY_QUIZZ', nom: 'Histehory Quizz', icone: '📜', version: '2.2.1',
       couleur: '#33230d', accent: '#f59e0b',
       description: 'Histoire : dates, personnages, citations, paires, chronologie, vrai ou faux.',
       totaux: { cle: 'totaux', parties: 'parties', bonnes: 'bonnes', questions: 'questions', temps: 'tempsMs', ms: true },

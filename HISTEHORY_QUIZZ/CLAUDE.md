@@ -32,7 +32,7 @@ dans le `CLAUDE.md` de la racine ; la documentation pour un humain est dans `REA
 | `js/donnees/dates.js` | 939 événements datés, triés par date, répartis sur toutes les époques et les six régions (Europe : environ les deux tiers) ; difficulté de 1 à 5 : 23 / 68 / 256 / 345 / 247. Chargé par `index.html`, utilisé par « Chronologie » et « Trouver la date » |
 | `js/donnees/portraits.js` | id → image : **généré** par `outils/portraits/f5_portraits.py`, ne pas l'éditer à la main |
 | `js/profils.js` / `js/compte.js` | statistiques (invité ou compte : historique, totaux, **records** par clé `<mode>.<réglage>`, lus par `HistProfils.record(clé)`, battus par `enregistrerPartie({ …, record: clé })`) / bouton et menu déroulant du compte (repris de Natehure, avec renommer, mot de passe, suppression et reprise des statistiques de l'invité) |
-| `img/personnes/`, `img/generiques/`, `img/CREDITS.md` | portraits (générés, ~30 Ko chacun), images génériques, crédits (généré) |
+| `img/personnes/`, `img/generiques/`, `img/CREDITS.md` | portraits (générés, 384 × 512, ~45 Ko chacun), médaillons ronds de la planche du chapitre 02 (`img/medaillons/`), images génériques, crédits (généré) |
 | `outils/portraits/` | fabrique des portraits en Python (mode d'emploi : son `README.md`) |
 
 Les noms des trois chapitres (Le fil du temps, Les grandes figures, L'épreuve de l'historien) sont une
@@ -149,21 +149,28 @@ Règles choisies par Théo le 13/11/2026 (version 2.2.0) :
 
 ## Portraits
 
-- Médaillons de 256 px en traits blancs (« taille-douce »), tirés de l'image Wikidata de chaque personne
-  (Wikimedia Commons) ; à défaut une **image générique** (souverain, dame, guerrier, religieux, savant).
+- **Rectangles 3:4 de 384 × 512 à double filet** (choix de Théo le 17/11/2026, après un essai de trois
+  variantes : filet, bords fondus, buste), traits blancs « taille-douce », tirés de l'image Wikidata de
+  chaque personne (Wikimedia Commons, sources en 960 px) ; à défaut une **image générique** (souverain,
+  dame, guerrier, religieux, savant : `gen.py`, recadrages dans `gen/meta.json`).
+- **Les médaillons ronds restent sur les pages d'accueil** (demande de Théo) : la planche du chapitre 02
+  lit `img/medaillons/<id>.webp` (anciens portraits ronds), pas `img/personnes/`. L'accueil du
+  Quizzarium a ses propres gravures rondes (`ACCUEIL/img/`).
 - **Mahomet n'a volontairement aucune image** (`null`) : à respecter pour toute personne ajoutée dans le
   même cas.
 - Nouvelle personne : relancer la chaîne `outils/portraits/` (`f1` → `f5`), qui réécrit `portraits.js` et
-  `img/CREDITS.md`. Les sources (`src/`, `grand/`…) ne sont pas versionnées.
+  `img/CREDITS.md`. Les sources (`src/`, `gen/src/`…) ne sont pas versionnées. Commons limite vite les
+  téléchargements (erreur 429) : `f3_dl.py` attend entre deux images ; ne pas lancer deux
+  téléchargements en même temps.
+- **OpenCV et les accents** : OpenCV n'ouvre pas un chemin contenant « é » (`C:\Users\Théo\…`) ;
+  `portrait.py` passe par le nom court Windows (`court()`).
 
 ## Plans
 
-- **Portraits en rectangles** (idée de Théo, 13/11/2026) : d'abord un **essai sur une dizaine** de portraits,
-  que Théo juge, avant de refaire les 521. Les sources ne sont plus sur le disque (`f3_dl.py` les
-  retélécharge) ; `portrait.py` découpe un carré et trace un double cercle, et les `coupe` de
-  `reglages.json` sont des carrés : tout est à adapter et à revoir (`revue2.py`), images génériques
-  comprises. Les cadres du jeu étant maintenant grands, en profiter pour monter la définition (512 px au
-  lieu de 256). La planche du chapitre 02 (`PLANCHES` de `js/menu.js`) utilise trois portraits.
+- **Dix portraits encore ronds** (18/11/2026) : Confucius, Qin Shi Huang, Héron d'Alexandrie, Al-Farabi,
+  Bernard de Clairvaux, Maïmonide, Bashō, Sojourner Truth, Sophie Scholl, Stephen Hawking. Leurs sources
+  font moins de 250 px : seul `upload.wikimedia.org` les sert, et il nous refusait (429). À refaire quand
+  il répond : `f3_dl.py . --petits`, puis `f4_conv.py ../../img/personnes` et revue (`revue2.py`).
 - Les quatre modes annoncés ; il faudra des citations pour « Qui a dit ça ? ».
 - « Chronologie » : variantes possibles à discuter avec Théo (période en années libres, dynasties ou
   successions de souverains, 6 à 8 blocs, score par ordre relatif).

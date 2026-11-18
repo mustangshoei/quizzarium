@@ -1,4 +1,11 @@
 {
+ "abbas-1": {
+  "coupe": [
+   0.45,
+   0.34,
+   0.7
+  ]
+ },
  "abelard": {
   "coupe": [
    0.5,
@@ -18,13 +25,20 @@
  },
  "aime-cesaire": {
   "coupe": [
-   0.42,
-   0.38,
-   0.6
+   0.46,
+   0.28,
+   0.55
   ]
  },
  "akbar": {
   "exclu": true
+ },
+ "akhenaton": {
+  "coupe": [
+   0.45,
+   0.3,
+   0.5
+  ]
  },
  "alaric-1": {
   "coupe": [
@@ -45,6 +59,20 @@
    0.8,
    0.3,
    0.42
+  ]
+ },
+ "aristarque": {
+  "coupe": [
+   0.21,
+   0.24,
+   0.32
+  ]
+ },
+ "arminius": {
+  "coupe": [
+   0.47,
+   0.3,
+   0.32
   ]
  },
  "ashoka": {
@@ -106,6 +134,13 @@
    0.38,
    0.42,
    0.7
+  ]
+ },
+ "benoit-nursie": {
+  "coupe": [
+   0.45,
+   0.17,
+   0.55
   ]
  },
  "berthe-morisot": {
@@ -214,6 +249,20 @@
    0.5
   ]
  },
+ "elvis-presley": {
+  "coupe": [
+   0.55,
+   0.2,
+   0.5
+  ]
+ },
+ "empedocle": {
+  "coupe": [
+   0.48,
+   0.33,
+   0.9
+  ]
+ },
  "euclide": {
   "exclu": true
  },
@@ -228,6 +277,13 @@
    0.5,
    0.38,
    0.8
+  ]
+ },
+ "flavius-josephe": {
+  "coupe": [
+   0.5,
+   0.32,
+   0.75
   ]
  },
  "galien": {
@@ -253,11 +309,25 @@
  "haroun-al-rachid": {
   "exclu": true
  },
+ "heloise": {
+  "coupe": [
+   0.48,
+   0.24,
+   0.6
+  ]
+ },
  "hemingway": {
   "coupe": [
    0.42,
    0.15,
    0.6
+  ]
+ },
+ "herge": {
+  "coupe": [
+   0.55,
+   0.42,
+   0.95
   ]
  },
  "heron-alexandrie": {
@@ -284,8 +354,21 @@
    0.8
   ]
  },
+ "hitler": {
+  "pleine": true
+ },
  "horace": {
   "exclu": true
+ },
+ "hugues-capet": {
+  "pleine": true
+ },
+ "jacques-cartier": {
+  "coupe": [
+   0.45,
+   0.24,
+   0.6
+  ]
  },
  "jenner": {
   "exclu": true
@@ -334,6 +417,9 @@
    0.15,
    0.45
   ]
+ },
+ "kubilai-khan": {
+  "pleine": true
  },
  "kurosawa": {
   "coupe": [
@@ -411,6 +497,9 @@
    0.55
   ]
  },
+ "marie-therese": {
+  "pleine": true
+ },
  "massinissa": {
   "coupe": [
    0.42,
@@ -446,8 +535,25 @@
    0.9
   ]
  },
+ "minamoto-yoritomo": {
+  "pleine": true
+ },
+ "mithridate-6": {
+  "coupe": [
+   0.45,
+   0.45,
+   1
+  ]
+ },
  "murasaki": {
   "exclu": true
+ },
+ "nabuchodonosor-2": {
+  "coupe": [
+   0.55,
+   0.42,
+   1
+  ]
  },
  "nagarjuna": {
   "exclu": true
@@ -499,11 +605,25 @@
    0.55
   ]
  },
+ "pizarro": {
+  "coupe": [
+   0.55,
+   0.3,
+   0.65
+  ]
+ },
  "polybe": {
   "coupe": [
    0.6,
    0.26,
    0.35
+  ]
+ },
+ "pyrrhus-1": {
+  "coupe": [
+   0.45,
+   0.17,
+   0.6
   ]
  },
  "pythagore": {
@@ -515,6 +635,9 @@
  },
  "rabia": {
   "exclu": true
+ },
+ "racine": {
+  "pleine": true
  },
  "razi": {
   "coupe": [
@@ -542,6 +665,9 @@
    0.2,
    0.55
   ]
+ },
+ "scipion-africain": {
+  "pleine": true
  },
  "sei-shonagon": {
   "exclu": true
@@ -595,6 +721,15 @@
    0.5
   ]
  },
+ "tariq": {
+  "pleine": true
+ },
+ "tchaikovski": {
+  "pleine": true
+ },
+ "tertullien": {
+  "pleine": true
+ },
  "thales": {
   "coupe": [
    0.52,
@@ -619,6 +754,13 @@
    0.3
   ]
  },
+ "tolstoi": {
+  "coupe": [
+   0.57,
+   0.31,
+   0.32
+  ]
+ },
  "toutankhamon": {
   "coupe": [
    0.5,
@@ -635,6 +777,16 @@
  "vercingetorix": {
   "exclu": true
  },
+ "vermeer": {
+  "coupe": [
+   0.58,
+   0.5,
+   0.8
+  ]
+ },
+ "vladimir-1": {
+  "pleine": true
+ },
  "walt-whitman": {
   "coupe": [
    0.55,
@@ -647,5 +799,15 @@
  },
  "xerxes-1": {
   "exclu": true
+ },
+ "xuanzang": {
+  "pleine": true
+ },
+ "zheng-he": {
+  "coupe": [
+   0.46,
+   0.15,
+   0.42
+  ]
  }
 }

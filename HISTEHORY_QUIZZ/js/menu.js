@@ -80,9 +80,10 @@
      ce carton (côté : de quel côté du point s'écrit l'étiquette), ils restent donc en place quelle que
      soit la taille affichée. */
   const L = 400, HT = 520;
+  // Les médaillons de la planche restent RONDS : img/medaillons/<id>.webp (les anciens portraits
+  // ronds, gardés pour elle ; les portraits du jeu, img/personnes/, sont rectangulaires depuis 2.2.1)
   const portrait = (id, cx, cy, r) => {
-    const f = H.PORTRAITS && H.PORTRAITS[id];
-    if (!f) return '';
+    const f = 'medaillons/' + id + '.webp';
     return '<clipPath id="pl-' + id + '"><circle cx="' + cx + '" cy="' + cy + '" r="' + (r - 6) + '"/></clipPath>' +
       '<image href="img/' + f + '" x="' + (cx - r) + '" y="' + (cy - r) + '" width="' + 2 * r + '" height="' + 2 * r +
       '" clip-path="url(#pl-' + id + ')" preserveAspectRatio="xMidYMid slice"/>';

@@ -3,7 +3,7 @@
 Jeu consacré à l'histoire (nom provisoire). Il fait partie du dossier des jeux : lancement, comptes
 communs et serveur sont décrits dans le [README à la racine](../README.md).
 
-**Version 2.2.0** (numérotation MAJEUR.MINEUR.CORRECTIF : voir « Versions » dans le
+**Version 2.2.1** (numérotation MAJEUR.MINEUR.CORRECTIF : voir « Versions » dans le
 [README à la racine](../README.md#versions)).
 
 **Modes de jeu** : trois sont jouables, **Qui est venu en premier ?**, **Chronologie** et **Trouver la
@@ -113,10 +113,11 @@ indices (thématique · région), jamais sa date. Les événements viennent de `
 ## Qui est venu en premier ? (`js/modes/premier.js`, `css/premier.css`)
 
 Chapitre 02, « Les grandes figures ». Deux personnages s'affichent en grand au milieu de l'écran, chacun
-dans un cadre (même principe que les rectangles de la page d'accueil) : le portrait-médaille, et le nom sur
-un cartouche (pays · domaine · époque, puis la date de naissance). La consigne est toujours la même,
-rappelée en haut de l'écran : **qui est né en premier ?** On clique sur le plus ancien des deux (ou flèche
-gauche / droite) ; les années s'inscrivent sur les cartouches, un badge ✓ / ✗ marque les cadres et une
+dans un cadre en forme de portrait (brun sombre, liseré doré), un losange « VS » entre les deux : le
+portrait à double filet, puis, sous un filet doré, le nom, pays · domaine · époque et la date de naissance
+(« Né en ? » dans une pastille en pointillés tant qu'on ne la connaît pas). La consigne est toujours la
+même, en capitales en haut de l'écran : **qui est né en premier ?** On clique sur le plus ancien des deux
+(ou flèche gauche / droite) ; les années s'inscrivent en doré, un badge ✓ / ✗ marque les cadres et une
 mini-frise montre l'écart.
 
 - **Partie sans fin, en mort subite** : pas de nombre de questions ; la partie s'arrête à la première
@@ -141,11 +142,15 @@ mini-frise montre l'écart.
 ## Portraits (`img/`, `js/donnees/portraits.js`)
 
 Chaque personne de `js/donnees/personnes.js` a une image, rangée dans `js/donnees/portraits.js` :
-son **portrait** (`img/personnes/<id>.webp`, médaillon de 256 px, ~30 Ko ; 17 Mo en tout), ou à défaut une **image
-générique** (`img/generiques/` : souverain, dame, guerrier, religieux, savant ; Mahomet n'a volontairement aucune image). Les portraits viennent
-de l'image principale de chaque personne sur Wikidata (Wikimedia Commons), recadrée sur le visage puis
-convertie en traits blancs ; sources, auteurs et licences : [img/CREDITS.md](img/CREDITS.md). Les
-scripts qui les fabriquent sont dans `outils/portraits/` (voir son README).
+son **portrait** (`img/personnes/<id>.webp`, rectangle 3:4 de 384 × 512 entouré d'un double filet,
+~45 Ko), ou à défaut une **image générique** (`img/generiques/` : souverain, dame, guerrier, religieux,
+savant ; Mahomet n'a volontairement aucune image). Les portraits viennent de l'image principale de chaque
+personne sur Wikidata (Wikimedia Commons), recadrée sur le visage puis convertie en traits blancs
+(« taille-douce ») ; sources, auteurs et licences : [img/CREDITS.md](img/CREDITS.md). Les scripts qui les
+fabriquent sont dans `outils/portraits/` (voir son README).
+
+La planche du chapitre 02 garde des **médaillons ronds** : `img/medaillons/` (Napoléon, Jeanne d'Arc,
+Marie Curie), les anciens portraits ronds de 256 px, conservés pour elle.
 
 **Ouvert au public** depuis la version 2.0.0 : sa tuile est un lien sur la page d'accueil et dans le menu
 « Jeux » des autres jeux, et ses totaux comptent dans le bouton « Statistiques » de l'accueil (champ
@@ -159,6 +164,7 @@ d'où il s'affiche dans le menu « Jeux », sur la page d'accueil et en bas du m
 
 | Version | Date | Changements |
 |---|---|---|
+| 2.2.1 | 17/11/2026 | **Portraits refaits** : rectangles 3:4 à double filet (384 × 512, au lieu de médaillons ronds de 256 px), tirés de sources en 960 px ; images génériques comprises. La planche du chapitre 02 garde ses trois médaillons ronds (`img/medaillons/`). **Qui est venu en premier ?** : cadres en forme de portrait (brun sombre, liseré et lueur dorés au survol), losange « VS » entre les deux, nom sous un filet doré, « Né en ? » dans une pastille en pointillés, consigne en capitales, « Quitter » et score en pastilles. |
 | 2.2.0 | 13/11/2026 | **Qui est venu en premier ?** change de règle et passe dans le chapitre 02 (Les grandes figures). Toujours « qui est né en premier ? » (plus de « en dernier »), sans nombre de questions : la partie continue jusqu'à la première erreur, avec un record par niveau. Après chaque bonne réponse, l'un des deux personnages reste (tiré au hasard, 3 manches de suite au plus) et garde sa date affichée ; l'autre est remplacé, sans revenir avant que tous les autres soient passés. Préphase sur le modèle de « Trouver la date » : période en quatre cartes (« Tout / Aucun ») et difficulté en trois cartes, avec le nombre de personnages. Écran de jeu : les deux cadres en grand au milieu, la consigne fixe dans la barre du haut. Styles du mode dans `css/premier.css` ; l'interrupteur « Tout / Aucun » et les cartes des périodes passent de `date.css` à `style.css` (partagés). |
 | 2.1.0 | 11/11/2026 | Nouveau mode **Trouver la date** : un événement (thème, région, intitulé, résumé), sa date à taper — l'année seule, ou la date exacte au jour près quand on la connaît ; juste ou faux, avec une marge pour les dates approximatives. Préphase en grille alignée : façon de jouer, 1 à 50 événements, filtres croisés par période, difficulté et thématique (emojis, interrupteurs « Tout / Aucun », réglages retenus). Fin : anneau de réussite, erreurs, « Revoir mes erreurs ». Les styles des filtres passent de `chronologie.css` à `style.css` (partagés). |
 | 2.0.0 | 10/11/2026 | **Nouvelle interface**, sur le modèle des autres jeux : menu « atlas » en trois chapitres (Le fil du temps, Les grandes figures, L'épreuve de l'historien), chacun avec sa planche dessinée et ses cartes ; les deux modes jouables en tête du premier chapitre. Thème « Chroniques » (polices locales Bricolage Grotesque et IBM Plex Mono, fond de papier réglé). Compte : menu déroulant en haut à gauche (comptes déjà utilisés ici, changer de compte) au lieu d'une fenêtre au centre. **Jeu ouvert au public.** |

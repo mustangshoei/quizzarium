@@ -3,7 +3,7 @@
    PORTRAITS DES PERSONNES (fichier GÉNÉRÉ : voir « Portraits » dans le README du jeu).
    --------------------------------------------------------------------------
    id de la personne (js/donnees/personnes.js) -> image, relative au dossier img/ :
-     personnes/<id>.webp   portrait propre, en médaillon de traits blancs (521 personnes) ;
+     personnes/<id>.webp   portrait propre, rectangle 3:4 de traits blancs à double filet (521 personnes) ;
      generiques/<type>.webp  image générique (souverain, dame, guerrier, religieux, savant),
                              quand aucun portrait libre n'a été trouvé ou retenu ;
      null                    aucune image (Mahomet : pas de représentation figurée).

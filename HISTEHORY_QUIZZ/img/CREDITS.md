@@ -1,8 +1,10 @@
 # Portraits — sources et crédits
 
-Les médaillons de `img/personnes/` et `img/generiques/` sont tirés d'images de **Wikimedia Commons**
+Les portraits de `img/personnes/` et `img/generiques/` sont tirés d'images de **Wikimedia Commons**
 (l'image principale de chaque personne sur Wikidata), recadrées puis converties en traits blancs sur
-fond transparent, dans le style des images de la page d'accueil. Chaque image garde la licence de sa
+fond transparent, dans le style des images de la page d'accueil. Les médaillons ronds de
+`img/medaillons/` (planche du menu) sont d'anciennes versions de trois d'entre eux, mêmes sources.
+Chaque image garde la licence de sa
 source : domaine public ou CC0 pour la plupart ; pour les licences CC BY et CC BY-SA, l'auteur est
 cité ci-dessous, et l'image transformée est diffusée sous la même licence.
 
@@ -454,7 +456,7 @@ Personnes qui reçoivent une image générique : **souverain** : Hammurabi, Cyru
 | `fleming.webp` | Alexander Fleming | [Synthetic Production of Penicillin TR1468.jpg](https://commons.wikimedia.org/wiki/File:Synthetic_Production_of_Penicillin_TR1468.jpg) | Official photographer | Public domain |
 | `roosevelt-franklin.webp` | Franklin Delano Roosevelt | [FDR 1944 Color Portrait.jpg](https://commons.wikimedia.org/wiki/File:FDR_1944_Color_Portrait.jpg) | Leon Perskie | CC BY 2.0 |
 | `virginia-woolf.webp` | Virginia Woolf | [George Charles Beresford - Virginia Woolf in 1902 - Restoration.jpg](https://commons.wikimedia.org/wiki/File:George_Charles_Beresford_-_Virginia_Woolf_in_1902_-_Restoration.jpg) | George Charles Beresford / Adam Cuerden | Public domain |
-| `james-joyce.webp` | James Joyce | [Revolutionary Joyce Better Contrast.jpg](https://commons.wikimedia.org/wiki/File:Revolutionary_Joyce_Better_Contrast.jpg) | voir la page source | Public domain |
+| `james-joyce.webp` | James Joyce | [Revolutionary Joyce Better Contrast.jpg](https://commons.wikimedia.org/wiki/File:Revolutionary_Joyce_Better_Contrast.jpg) | Camille Ruf | Public domain |
 | `stravinsky.webp` | Igor Stravinsky | [Igor Stravinsky LOC 32392u.jpg](https://commons.wikimedia.org/wiki/File:Igor_Stravinsky_LOC_32392u.jpg) | George Grantham Bain Collection | Public domain |
 | `kafka.webp` | Franz Kafka | [Kafka1906 cropped.jpg](https://commons.wikimedia.org/wiki/File:Kafka1906_cropped.jpg) | Atelier Jacobi: Sigismund Jacobi (1860–1935) | Public domain |
 | `coco-chanel.webp` | Coco Chanel | [Coco Chanel in Los Angeles, 1931 (cropped).jpg](https://commons.wikimedia.org/wiki/File:Coco_Chanel_in_Los_Angeles,_1931_(cropped).jpg) | Los Angeles Times | CC BY 4.0 |

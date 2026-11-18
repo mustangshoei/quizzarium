@@ -1,8 +1,8 @@
 /* ==========================================================================
    modes/premier.js — « Qui est venu en premier ? »
 
-   Deux personnages, chacun dans un grand cadre (portrait-médaille en traits blancs, nom sur un
-   cartouche) : on clique sur celui qui est né EN PREMIER (ou ← / →). Les deux années s'inscrivent
+   Deux personnages, chacun dans un grand cadre (portrait en traits blancs à double filet, nom sous un
+   filet doré), un losange « VS » entre eux : on clique sur celui qui est né EN PREMIER (ou ← / →). Les deux années s'inscrivent
    alors sur les cartouches, un badge ✓ / ✗ marque les cadres et une mini-frise montre l'écart.
 
    Partie sans fin, en « mort subite » : elle s'arrête à la première erreur. « Quitter » l'arrête aussi,
@@ -295,7 +295,7 @@
 
   // Le score, et le record à battre (rien s'il n'y en a pas encore) ; dépassé : « Nouveau record ! »
   function majScore() {
-    $('premier-score').textContent = 'Score : ' + nombre(partie.score);
+    $('premier-score').replaceChildren('Score : ', el('strong', '', nombre(partie.score)));
     const ancien = partie.ancienRecord, battu = ancien > 0 && partie.score > ancien;
     const rec = $('premier-record');
     rec.textContent = battu ? '🏆 Nouveau record !' : ancien ? 'Record : ' + nombre(ancien) : '';

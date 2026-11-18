@@ -25,7 +25,7 @@ js=f'''/* ======================================================================
    PORTRAITS DES PERSONNES (fichier GÉNÉRÉ : voir « Portraits » dans le README du jeu).
    --------------------------------------------------------------------------
    id de la personne (js/donnees/personnes.js) -> image, relative au dossier img/ :
-     personnes/<id>.webp   portrait propre, en médaillon de traits blancs ({n} personnes) ;
+     personnes/<id>.webp   portrait propre, rectangle 3:4 de traits blancs à double filet ({n} personnes) ;
      generiques/<type>.webp  image générique (souverain, dame, guerrier, religieux, savant),
                              quand aucun portrait libre n'a été trouvé ou retenu ;
      null                    aucune image (Mahomet : pas de représentation figurée).
@@ -43,9 +43,11 @@ js=f'''/* ======================================================================
 open(J+'/js/donnees/portraits.js','w',encoding='utf-8',newline='\n').write(js)
 esc=lambda s:(s or 'voir la page source').replace('|','/').replace('\n',' ')
 md=['# Portraits — sources et crédits','',
-'Les médaillons de `img/personnes/` et `img/generiques/` sont tirés d\'images de **Wikimedia Commons**',
+'Les portraits de `img/personnes/` et `img/generiques/` sont tirés d\'images de **Wikimedia Commons**',
 '(l\'image principale de chaque personne sur Wikidata), recadrées puis converties en traits blancs sur',
-'fond transparent, dans le style des images de la page d\'accueil. Chaque image garde la licence de sa',
+'fond transparent, dans le style des images de la page d\'accueil. Les médaillons ronds de',
+'`img/medaillons/` (planche du menu) sont d\'anciennes versions de trois d\'entre eux, mêmes sources.',
+'Chaque image garde la licence de sa',
 'source : domaine public ou CC0 pour la plupart ; pour les licences CC BY et CC BY-SA, l\'auteur est',
 'cité ci-dessous, et l\'image transformée est diffusée sous la même licence.','',
 '## Images génériques','','| Image | Source | Auteur | Licence |','|---|---|---|---|']

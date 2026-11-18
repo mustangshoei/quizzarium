@@ -113,8 +113,9 @@
       <span id="premier-score" class="jeu-barre__score"></span>
     </span>
   </div>
-  <!-- Au milieu de l'écran : deux grands cadres (badge ✓ / ✗, portrait-médaille, cartouche : nom,
-       pays · domaine · époque, date) et, juste dessous, le pied (aide, verdict, mini-frise, « Suivant ») -->
+  <!-- Au milieu de l'écran : deux grands cadres (badge ✓ / ✗, portrait à double filet, cartouche : nom,
+       pays · domaine · époque, date), un losange « VS » entre eux et, juste dessous, le pied (aide,
+       verdict, mini-frise, « Suivant ») -->
   <div class="premier-scene">
     <div class="duel">
       <button type="button" id="premier-a" class="cadre">
@@ -122,6 +123,7 @@
         <span class="cadre__portrait" aria-hidden="true"></span>
         <span class="cadre__cartouche"><span class="cadre__nom"></span><span class="cadre__info"></span><span class="cadre__date"></span></span>
       </button>
+      <span class="duel__vs" aria-hidden="true">VS</span>
       <button type="button" id="premier-b" class="cadre">
         <span class="cadre__badge" aria-hidden="true"></span>
         <span class="cadre__portrait" aria-hidden="true"></span>
