@@ -3,7 +3,7 @@
 Jeu consacré à l'histoire (nom provisoire). Il fait partie du dossier des jeux : lancement, comptes
 communs et serveur sont décrits dans le [README à la racine](../README.md).
 
-**Version 2.2.1** (numérotation MAJEUR.MINEUR.CORRECTIF : voir « Versions » dans le
+**Version 2.3.0** (numérotation MAJEUR.MINEUR.CORRECTIF : voir « Versions » dans le
 [README à la racine](../README.md#versions)).
 
 **Modes de jeu** : trois sont jouables, **Qui est venu en premier ?**, **Chronologie** et **Trouver la
@@ -114,7 +114,7 @@ indices (thématique · région), jamais sa date. Les événements viennent de `
 
 Chapitre 02, « Les grandes figures ». Deux personnages s'affichent en grand au milieu de l'écran, chacun
 dans un cadre en forme de portrait (brun sombre, liseré doré), un losange « VS » entre les deux : le
-portrait à double filet, puis, sous un filet doré, le nom, pays · domaine · époque et la date de naissance
+portrait à double filet, puis, sous un filet doré, le nom, pays · domaine (jamais l'époque, qui donnerait la réponse) et la date de naissance
 (« Né en ? » dans une pastille en pointillés tant qu'on ne la connaît pas). La consigne est toujours la
 même, en capitales en haut de l'écran : **qui est né en premier ?** On clique sur le plus ancien des deux
 (ou flèche gauche / droite) ; les années s'inscrivent en doré, un badge ✓ / ✗ marque les cadres et une
@@ -134,10 +134,11 @@ mini-frise montre l'écart.
   approximative, au moins 15 ans d'écart.
 - **Préphase** : la **période** (quatre cartes cumulables : Antiquité, Moyen Âge, époque moderne, époque
   contemporaine, avec l'interrupteur « Tout / Aucun » ; époque = celle du milieu de la vie) et la
-  **difficulté** (un seul choix : Facile = difficulté 1-2, Moyen = 1-3, Expert = toutes), avec le nombre de
-  personnages sur chaque case ; lancement impossible sous 3 personnages. Réglages retenus.
+  **difficulté** (trois tranches cumulables, chacune avec son « Tout / Aucun » : Facile = difficulté 1-2,
+  Moyen = 3, Expert = 4-5), avec le nombre de personnages sur chaque case ; lancement impossible sous 3
+  personnages. Réglages retenus. Chaque combinaison de difficultés a son propre record.
 - **Fin** : la série, le record (battu ou non), l'erreur qui a arrêté la partie (« Vous avez choisi X, né
-  en 1480 ; Y est né 29 ans plus tôt »), le niveau, les périodes et le temps.
+  en 1480 ; Y est né 29 ans plus tôt »), les difficultés, les périodes et le temps.
 
 ## Portraits (`img/`, `js/donnees/portraits.js`)
 
@@ -164,6 +165,7 @@ d'où il s'affiche dans le menu « Jeux », sur la page d'accueil et en bas du m
 
 | Version | Date | Changements |
 |---|---|---|
+| 2.3.0 | 18/11/2026 | **Qui est venu en premier ?** : les difficultés se cumulent (trois tranches distinctes, Facile 1-2, Moyen 3, Expert 4-5, avec « Tout / Aucun » ; un record par combinaison, les anciens records restent valables) ; l'époque n'est plus écrite sous le nom (Antiquité contre époque contemporaine donnait la réponse) ; il reste pays · domaine. Huit portraits encore ronds refaits en rectangles (Qin Shi Huang, Héron d'Alexandrie, Al-Farabi, Bernard de Clairvaux, Maïmonide, Bashō, Sophie Scholl, Stephen Hawking). |
 | 2.2.1 | 17/11/2026 | **Portraits refaits** : rectangles 3:4 à double filet (384 × 512, au lieu de médaillons ronds de 256 px), tirés de sources en 960 px ; images génériques comprises. La planche du chapitre 02 garde ses trois médaillons ronds (`img/medaillons/`). **Qui est venu en premier ?** : cadres en forme de portrait (brun sombre, liseré et lueur dorés au survol), losange « VS » entre les deux, nom sous un filet doré, « Né en ? » dans une pastille en pointillés, consigne en capitales, « Quitter » et score en pastilles. |
 | 2.2.0 | 13/11/2026 | **Qui est venu en premier ?** change de règle et passe dans le chapitre 02 (Les grandes figures). Toujours « qui est né en premier ? » (plus de « en dernier »), sans nombre de questions : la partie continue jusqu'à la première erreur, avec un record par niveau. Après chaque bonne réponse, l'un des deux personnages reste (tiré au hasard, 3 manches de suite au plus) et garde sa date affichée ; l'autre est remplacé, sans revenir avant que tous les autres soient passés. Préphase sur le modèle de « Trouver la date » : période en quatre cartes (« Tout / Aucun ») et difficulté en trois cartes, avec le nombre de personnages. Écran de jeu : les deux cadres en grand au milieu, la consigne fixe dans la barre du haut. Styles du mode dans `css/premier.css` ; l'interrupteur « Tout / Aucun » et les cartes des périodes passent de `date.css` à `style.css` (partagés). |
 | 2.1.0 | 11/11/2026 | Nouveau mode **Trouver la date** : un événement (thème, région, intitulé, résumé), sa date à taper — l'année seule, ou la date exacte au jour près quand on la connaît ; juste ou faux, avec une marge pour les dates approximatives. Préphase en grille alignée : façon de jouer, 1 à 50 événements, filtres croisés par période, difficulté et thématique (emojis, interrupteurs « Tout / Aucun », réglages retenus). Fin : anneau de réussite, erreurs, « Revoir mes erreurs ». Les styles des filtres passent de `chronologie.css` à `style.css` (partagés). |

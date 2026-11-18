@@ -78,11 +78,14 @@ d'Anotehomy (`js/game/matcher.js`, `js/game/lexique-*.js`) : jamais de chargemen
 Règles choisies par Théo le 13/11/2026 (version 2.2.0) :
 
 - Toujours « qui est né **en premier** ? » (plus de « en dernier ») ; la consigne, fixe, est dans la barre
-  du haut. Deux grands cadres « médaille » au milieu de l'écran (portrait, cartouche nom / pays · domaine ·
-  époque / date) ; clic ou ← / →.
+  du haut. Deux grands cadres au milieu de l'écran (portrait, cartouche nom / pays · domaine / date) ;
+  clic ou ← / →. **Jamais l'époque sur les cadres** : elle trahirait la réponse (demande de Théo, 18/11).
 - **Mort subite**, sans nombre de questions : la partie s'arrête à la première erreur ; « Quitter » aussi
-  (la série compte s'il y a au moins une bonne réponse). Score = bonnes réponses d'affilée ; record par
-  niveau, clé `premier.<niveau>` (`facile`, `moyen`, `expert` : à ne plus changer).
+  (la série compte s'il y a au moins une bonne réponse). Score = bonnes réponses d'affilée ; **un record
+  par combinaison de difficultés** (`CLES_RECORD` dans `premier.js`, clé `premier.<clé>` : à ne plus changer).
+  Avant la 2.3.0 les niveaux étaient cumulatifs (facile ≤ 2, moyen ≤ 3, expert = tout) : `facile`, `moyen`
+  (= facile + moyen) et `expert` (= les trois cochées) gardent leur sens ; les autres combinaisons sont
+  `moyen-seul`, `expert-seul`, `facile+expert`, `moyen+expert`.
 - Après une bonne réponse, **l'un reste, l'autre est remplacé** : celui qui reste est tiré au hasard parmi
   ceux qui ont joué moins de `MAX_MANCHES` = 3 manches de suite ; il garde sa place et **sa date reste
   affichée** (le nouveau venu : « Né en ? »). La suite est préparée dès la réponse (`partie.suite`, portrait
@@ -95,8 +98,9 @@ Règles choisies par Théo le 13/11/2026 (version 2.2.0) :
   rien dans la pioche ne se départage d'avec celui qui reste, on essaie l'autre, puis on remplit la pioche,
   puis deux nouveaux (cas des toutes petites sélections).
 - Préphase : période (époque de la personne, au milieu de sa vie ; cartes cumulables, « Tout / Aucun ») ×
-  difficulté (un seul choix : Facile ≤ 2, Moyen ≤ 3, Expert = toutes), nombres croisés ; lancement
-  impossible sous `MIN_PERSONNES` = 3 ou sans paire départageable. Réglages : `histehory.premier.reglages`.
+  difficulté (**trois tranches cumulables**, choix de Théo du 18/11 : Facile = 1-2, Moyen = 3, Expert = 4-5,
+  avec leur propre « Tout / Aucun » ; `enteteFiltre()` sert aux deux filtres), nombres croisés ; lancement
+  impossible sous `MIN_PERSONNES` = 3 ou sans paire départageable. Réglages : `histehory.premier.reglages` (`niveaux` ; l'ancien `niveau` unique est converti).
 - Bonne réponse : suite après `DELAI_AUTO` = 1,8 s (le bouton « Suivant » se remplit) ; erreur : on lit la
   frise, puis « Voir le résultat » ou Entrée. Fin : série, record, l'erreur fatale, niveau, périodes, temps.
 
@@ -167,10 +171,11 @@ Règles choisies par Théo le 13/11/2026 (version 2.2.0) :
 
 ## Plans
 
-- **Dix portraits encore ronds** (18/11/2026) : Confucius, Qin Shi Huang, Héron d'Alexandrie, Al-Farabi,
-  Bernard de Clairvaux, Maïmonide, Bashō, Sojourner Truth, Sophie Scholl, Stephen Hawking. Leurs sources
-  font moins de 250 px : seul `upload.wikimedia.org` les sert, et il nous refusait (429). À refaire quand
-  il répond : `f3_dl.py . --petits`, puis `f4_conv.py ../../img/personnes` et revue (`revue2.py`).
+- **Deux portraits encore ronds** (18/11/2026) : Confucius et Sojourner Truth (les huit autres « petits »
+  sont refaits, version 2.2.2). Leurs sources font moins de 250 px : seul `upload.wikimedia.org` les sert
+  (`thumb.wikimedia.org` répond 400 sous 250 px), et il nous refuse souvent (429). À refaire quand il
+  répond : `f3_dl.py . --petits`, puis conversion (`f4_conv.py ../../img/personnes`, ou `traite()` sur
+  ces deux seuls) et revue (`essai2.py`).
 - Les quatre modes annoncés ; il faudra des citations pour « Qui a dit ça ? ».
 - « Chronologie » : variantes possibles à discuter avec Théo (période en années libres, dynasties ou
   successions de souverains, 6 à 8 blocs, score par ordre relatif).

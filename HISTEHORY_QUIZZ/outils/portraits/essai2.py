@@ -9,7 +9,7 @@ for i,k in enumerate(ids):
     src=Image.fromarray(rgb); sc=min(T/w,T/h); src=src.resize((int(w*sc),int(h*sc))); d=ImageDraw.Draw(src)
     c=r.get('coupe')
     if c:   # cadrage 3:4, comme portrait.coupe()
-        lw=c[2]*w; lh=lw*4/3; k=min(1,w/lw,h/lh); lw*=k; lh*=k
+        lw=c[2]*w; lh=lw*4/3; f=min(1,w/lw,h/lh); lw*=f; lh*=f
         x0=min(max(c[0]*w-lw/2,0),w-lw); y0=min(max(c[1]*h-lh*.36,0),h-lh)
         d.rectangle([x0*sc,y0*sc,(x0+lw)*sc,(y0+lh)*sc],outline=(255,0,0),width=2)
     for j in range(1,10): d.line([(0,src.height*j/10),(6,src.height*j/10)],fill=(255,0,0)); d.line([(src.width*j/10,0),(src.width*j/10,6)],fill=(255,0,0))

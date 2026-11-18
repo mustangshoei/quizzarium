@@ -30,7 +30,7 @@ n'est chargé depuis Internet (polices comprises).
 |---|---|---|---|---|---|
 | 🌍 GéoNohyne Quizz | `GEONOHYNE_QUIZZ/` | `geonohyne` | 2.2.0 | ouvert, le plus complet | **modèle de référence** (identifiants en français) |
 | 🦴 Anotehomy Quizz | `ANOTEHOMY_QUIZZ/` | `anotehomy` | 2.5.0 | ouvert | **modèle de référence** (identifiants en anglais, 3D) |
-| 📜 Histehory Quizz | `HISTEHORY_QUIZZ/` | `histehory` | 2.2.1 | ouvert, 3 modes sur 7 | menu « atlas » comme les autres (identifiants en français) |
+| 📜 Histehory Quizz | `HISTEHORY_QUIZZ/` | `histehory` | 2.3.0 | ouvert, 3 modes sur 7 | menu « atlas » comme les autres (identifiants en français) |
 | 🌿 Natehure Quizz | `NATEHURE_QUIZZ/` | `natehure` | 0.1.0 | fermé (`bloque`), menu seul | copie de la structure d'Anotehomy |
 
 **Quand tu crées quelque chose de nouveau, prends exemple d'abord sur GéoNohyne ou Anotehomy** : ce sont

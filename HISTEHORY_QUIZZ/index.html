@@ -89,13 +89,10 @@
       <h1><span class="premier-config__icone" aria-hidden="true">🥇</span>Qui est venu en premier&nbsp;?</h1>
       <p>Deux personnages : cliquez sur celui qui est né <strong>en premier</strong>. L'un des deux reste, l'autre est remplacé, et ainsi de suite jusqu'à la première erreur.</p>
     </header>
-    <!-- Période : quatre cartes cumulables et « Tout / Aucun » ; construites par js/modes/premier.js -->
+    <!-- Période (quatre cartes) et difficulté (trois cartes), cumulables, chacune avec « Tout / Aucun » ;
+         construites par js/modes/premier.js -->
     <div id="premier-periodes" class="chrono-groupe"></div>
-    <!-- Difficulté : trois cartes, un seul choix -->
-    <div class="chrono-groupe">
-      <div class="chrono-groupe__tete"><h2 class="config__titre">Difficulté</h2></div>
-      <div id="premier-niveaux" class="premier-niveaux" role="group" aria-label="Difficulté"></div>
-    </div>
+    <div id="premier-difficultes" class="chrono-groupe"></div>
     <p id="premier-etat" class="chrono-etat" role="status" aria-live="polite"></p>
     <div class="config__actions">
       <button type="button" class="btn btn-soft" data-action="menu">← Accueil</button>
@@ -114,7 +111,7 @@
     </span>
   </div>
   <!-- Au milieu de l'écran : deux grands cadres (badge ✓ / ✗, portrait à double filet, cartouche : nom,
-       pays · domaine · époque, date), un losange « VS » entre eux et, juste dessous, le pied (aide,
+       pays · domaine, jamais l'époque, date), un losange « VS » entre eux et, juste dessous, le pied (aide,
        verdict, mini-frise, « Suivant ») -->
   <div class="premier-scene">
     <div class="duel">

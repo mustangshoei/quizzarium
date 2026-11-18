@@ -3,7 +3,7 @@
    Réutilise les variables, boutons, écrans de configuration et de fin, la barre et le pied de partie, et
    les filtres en cases de css/style.css (dont l'interrupteur « Tout / Aucun » et les cartes des
    périodes). Chargé après style.css.
-   Préphase : période (quatre cartes cumulables) et difficulté (trois cartes, un seul choix, coché).
+   Préphase : période (quatre cartes cumulables) et difficulté (trois cartes cumulables, cochées).
    Partie : deux grands cadres en forme de portrait au milieu de l'écran, un losange « VS » entre eux ;
    la consigne, fixe, en capitales dans la barre du haut. Fin : la série, le record, l'erreur.
    ========================================================================== */
@@ -30,7 +30,7 @@
 /* Compteurs de largeur fixe (jusqu'à 3 chiffres) : rien ne bouge quand les nombres changent */
 .premier-config .puce__n { min-width: 2.1rem; padding: 0 .3rem; }
 
-/* Difficulté : trois cartes sur une ligne (nom, aide, nombre), la choisie cochée */
+/* Difficulté : trois cartes sur une ligne (nom, aide, nombre), les choisies cochées */
 .premier-niveaux { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: .6rem; }
 .puce--niveau { grid-template-columns: minmax(0, 1fr) auto; min-height: 3.3rem; }
 .premier-config .puce--niveau.is-active::after {

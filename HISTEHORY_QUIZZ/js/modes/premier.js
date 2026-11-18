@@ -2,12 +2,13 @@
    modes/premier.js — « Qui est venu en premier ? »
 
    Deux personnages, chacun dans un grand cadre (portrait en traits blancs à double filet, nom sous un
-   filet doré), un losange « VS » entre eux : on clique sur celui qui est né EN PREMIER (ou ← / →). Les deux années s'inscrivent
+   filet doré, puis pays · domaine, jamais l'époque, qui trahirait la réponse), un losange « VS » entre
+   eux : on clique sur celui qui est né EN PREMIER (ou ← / →). Les deux années s'inscrivent
    alors sur les cartouches, un badge ✓ / ✗ marque les cadres et une mini-frise montre l'écart.
 
    Partie sans fin, en « mort subite » : elle s'arrête à la première erreur. « Quitter » l'arrête aussi,
-   et la série en cours compte. Score = bonnes réponses d'affilée ; un record par niveau
-   (HistProfils.record('premier.<niveau>')).
+   et la série en cours compte. Score = bonnes réponses d'affilée ; un record par combinaison de
+   difficultés (HistProfils.record('premier.' + clé), clés dans CLES_RECORD).
 
    Après une bonne réponse (la suite arrive seule au bout de DELAI_AUTO, le bouton « Suivant » se
    remplit), l'un des deux personnages reste et l'autre est remplacé. Celui qui reste est tiré au hasard,
@@ -20,9 +21,9 @@
    à l'autre. Jamais deux personnes nées la même année ; si l'une des deux dates est approximative
    (« vers »), au moins ECART_APPROX ans d'écart, pour que la réponse reste sûre.
 
-   Préphase : la période (époques cumulables, interrupteur « Tout / Aucun ») et la difficulté (un seul
-   choix : Facile = difficulté 1-2, Moyen = 1-3, Expert = toutes), avec le nombre de personnages sur
-   chaque case (croisé avec l'autre filtre). Lancement impossible sous MIN_PERSONNES. Réglages retenus
+   Préphase : la période (époques cumulables) et la difficulté (trois tranches cumulables : Facile =
+   difficulté 1-2, Moyen = 3, Expert = 4-5), chacune avec son interrupteur « Tout / Aucun » et le nombre
+   de personnages sur chaque case (croisé avec l'autre filtre). Lancement impossible sous MIN_PERSONNES. Réglages retenus
    (clé histehory.premier.reglages).
 
    Portraits : js/donnees/portraits.js (HISTEHORY.PORTRAITS) ; sans lui, les cadres restent sans image.
@@ -39,19 +40,27 @@
   const MAX_MANCHES = 3;              // manches de suite au plus pour un même personnage
   const MIN_PERSONNES = 3;            // personnages au moins dans la sélection
   const CLE = 'histehory.premier.reglages';
+  // Trois tranches de difficulté (1 = très connu … 5 = presque inconnu), qu'on peut cumuler
   const NIVEAUX = {
-    facile: { titre: 'Facile', aide: 'Les plus connus', max: 2 },
-    moyen: { titre: 'Moyen', aide: 'Connus et moins connus', max: 3 },
-    expert: { titre: 'Expert', aide: 'Tous les personnages', max: 5 }
+    facile: { titre: 'Facile', aide: 'Les plus connus', min: 1, max: 2 },
+    moyen: { titre: 'Moyen', aide: 'Moins connus', min: 3, max: 3 },
+    expert: { titre: 'Expert', aide: 'Les plus rares', min: 4, max: 5 }
+  };
+  // Clé du record (HistProfils : « premier.<clé> ») pour chaque combinaison de tranches. Avant 2.3.0 les
+  // niveaux étaient cumulatifs (facile <= 2, moyen <= 3, expert = tout) : les anciennes clés gardent donc
+  // leur sens sur les combinaisons qui leur correspondent. À ne plus changer (identifiants stables).
+  const CLES_RECORD = {
+    facile: 'facile', 'facile+moyen': 'moyen', 'facile+moyen+expert': 'expert',
+    moyen: 'moyen-seul', expert: 'expert-seul', 'facile+expert': 'facile+expert', 'moyen+expert': 'moyen+expert'
   };
   // Époque d'une personne : celle du milieu de sa vie, sauf époque imposée (js/donnees/personnes.js)
   const EPOQUES = () => H.EPOQUES || { antiquite: 'Antiquité', 'moyen-age': 'Moyen Âge', moderne: 'Époque moderne', contemporaine: 'Époque contemporaine' };
   const AIDE_EPOQUE = { antiquite: 'avant 476', 'moyen-age': '476 – 1452', moderne: '1453 – 1788', contemporaine: 'depuis 1789' };
   const ICONES_EPOQUE = { antiquite: '🏛️', 'moyen-age': '🏰', moderne: '⛵', contemporaine: '🏭' };
 
-  const reglages = { niveau: 'facile', epoques: new Set() };
+  const reglages = { niveaux: new Set(['facile']), epoques: new Set() };
   const cases = { epoques: {}, niveaux: {} };   // valeur -> { bouton, n }
-  let bascule = null;                 // interrupteur « Tout / Aucun » des périodes
+  const bascules = {};                // interrupteurs « Tout / Aucun » : { epoques, niveaux }
   let partie = null;
   let minuterie = null;
 
@@ -69,7 +78,13 @@
     for (let i = t.length - 1; i > 0; i--) { const j = hasard(i + 1); [t[i], t[j]] = [t[j], t[i]]; }
     return t;
   }
-  const record = (niveau) => (window.HistProfils && HistProfils.record ? HistProfils.record('premier.' + niveau) : 0);
+  // Les tranches cochées, dans l'ordre facile -> expert
+  const tranches = (niveaux) => Object.keys(NIVEAUX).filter((k) => niveaux.has(k));
+  const cleRecord = (niveaux) => CLES_RECORD[tranches(niveaux).join('+')];
+  const record = (niveaux) => {
+    const cle = cleRecord(niveaux);
+    return cle && window.HistProfils && HistProfils.record ? HistProfils.record('premier.' + cle) : 0;
+  };
 
   /* ---------- Textes ---------- */
   function annee(p) {
@@ -78,6 +93,10 @@
   }
   // « Né en 1451 », « Née vers 1412 », « Né en 52 av. J.-C. » (minuscule : « né en 1451 »)
   const ne = (p, minuscule) => (p.sexe === 'F' ? 'Née ' : 'Né ').replace('N', minuscule ? 'n' : 'N') + (p.approx ? '' : 'en ') + annee(p);
+  function niveauxTexte(niveaux) {
+    const cles = tranches(new Set(niveaux));
+    return cles.length === Object.keys(NIVEAUX).length ? 'Toutes les difficultés' : cles.map((k) => NIVEAUX[k].titre).join(' + ');
+  }
   function periodesTexte(epoques) {
     const noms = EPOQUES();
     return epoques.length === Object.keys(noms).length ? 'Toutes les périodes' : epoques.map((e) => noms[e]).join(', ');
@@ -100,8 +119,9 @@
     if (d === 0) return false;
     return !(a.approx || b.approx) || d >= ECART_APPROX;
   }
-  const passe = (p, niveau, epoques) => p.difficulte <= NIVEAUX[niveau].max && epoques.has(p.epoque);
-  const selection = () => PERSONNES.filter((p) => passe(p, reglages.niveau, reglages.epoques));
+  const dansNiveaux = (p, niveaux) => Array.from(niveaux).some((k) => p.difficulte >= NIVEAUX[k].min && p.difficulte <= NIVEAUX[k].max);
+  const passe = (p, niveaux, epoques) => dansNiveaux(p, niveaux) && epoques.has(p.epoque);
+  const selection = () => PERSONNES.filter((p) => passe(p, reglages.niveaux, reglages.epoques));
   // Au moins une paire qu'on peut départager (sinon, impossible de jouer)
   function unePaire(liste) {
     for (let i = 0; i < liste.length; i++) {
@@ -162,7 +182,7 @@
     catch (e) { return null; }
   }
   function sauverReglages() {
-    try { localStorage.setItem(CLE, JSON.stringify({ niveau: reglages.niveau, epoques: Array.from(reglages.epoques) })); }
+    try { localStorage.setItem(CLE, JSON.stringify({ niveaux: Array.from(reglages.niveaux), epoques: Array.from(reglages.epoques) })); }
     catch (e) { /* stockage bloqué */ }
   }
 
@@ -179,55 +199,78 @@
     return { bouton: b, n };
   }
 
-  function construirePreparation() {
-    const lu = lireReglages() || {};
-    if (NIVEAUX[lu.niveau]) reglages.niveau = lu.niveau;
-    const cles = Object.keys(EPOQUES());
-    const garde = Array.isArray(lu.epoques) ? lu.epoques.filter((e) => cles.includes(e)) : null;
-    reglages.epoques = new Set(garde || cles);
-
-    // Période : « Tout ◯ Aucun » (un interrupteur entre les deux mots) et quatre cartes
-    const groupe = $('premier-periodes');
+  // Titre d'un filtre et son « Tout ◯ Aucun » (un interrupteur entre les deux mots) : { tete, bascule }.
+  // `ensemble` est l'ensemble coché (modifié sur place), `cles` toutes les valeurs possibles.
+  function enteteFiltre(titre, cles, ensemble) {
     const tete = el('div', 'chrono-groupe__tete');
     const outils = el('span', 'chrono-groupe__outils bascule');
-    const toutOuRien = (tout) => { reglages.epoques = new Set(tout ? cles : []); majPreparation(); };
+    const toutOuRien = (tout) => { ensemble.clear(); if (tout) cles.forEach((c) => ensemble.add(c)); majPreparation(); };
     const bTout = el('button', 'btn-link', 'Tout');
     const bAucun = el('button', 'btn-link', 'Aucun');
-    bascule = el('button', 'bascule__interrupteur');
-    [bTout, bAucun, bascule].forEach((b) => { b.type = 'button'; });
+    const bascule = el('button', 'bascule__interrupteur');
+    [bTout, bAucun, bascule].forEach((x) => { x.type = 'button'; });
     bascule.setAttribute('role', 'switch');
-    bascule.setAttribute('aria-label', 'Période : tout cocher');
+    bascule.setAttribute('aria-label', titre + ' : tout cocher');
     bTout.addEventListener('click', () => toutOuRien(true));
     bAucun.addEventListener('click', () => toutOuRien(false));
     bascule.addEventListener('click', () => toutOuRien(bascule.dataset.etat !== 'tout'));
     outils.append(bTout, bascule, bAucun);
-    tete.append(el('h2', 'config__titre', 'Période'), outils);
+    tete.append(el('h2', 'config__titre', titre), outils);
+    return { tete, bascule };
+  }
+  // Interrupteur : tout / partiel / aucun selon le nombre de cases cochées
+  function majBascule(bascule, coches, total) {
+    const etat = coches === 0 ? 'aucun' : coches === total ? 'tout' : 'partiel';
+    bascule.dataset.etat = etat;
+    bascule.setAttribute('aria-checked', etat === 'tout');
+  }
+  function basculer(ensemble, cle) {
+    if (ensemble.has(cle)) ensemble.delete(cle); else ensemble.add(cle);
+    majPreparation();
+  }
+
+  function construirePreparation() {
+    const lu = lireReglages() || {};
+    const cles = Object.keys(EPOQUES());
+    const garde = Array.isArray(lu.epoques) ? lu.epoques.filter((e) => cles.includes(e)) : null;
+    reglages.epoques = new Set(garde || cles);
+    // Avant 2.3.0 : un seul niveau, cumulatif (« moyen » = facile + moyen, « expert » = tout)
+    const anciens = { facile: ['facile'], moyen: ['facile', 'moyen'], expert: ['facile', 'moyen', 'expert'] };
+    const niveaux = Array.isArray(lu.niveaux) ? lu.niveaux.filter((k) => NIVEAUX[k]) : (anciens[lu.niveau] || null);
+    reglages.niveaux = new Set(niveaux || ['facile']);
+
+    // Période : « Tout ◯ Aucun » et quatre cartes
+    const hautPeriode = enteteFiltre('Période', cles, reglages.epoques);
+    bascules.epoques = hautPeriode.bascule;
     const liste = el('div', 'puces-cartes');
     Object.entries(EPOQUES()).forEach(([e, nom]) => {
       const c = caseCarte('', ICONES_EPOQUE[e], nom, AIDE_EPOQUE[e] || '');
-      c.bouton.addEventListener('click', () => {
-        if (reglages.epoques.has(e)) reglages.epoques.delete(e); else reglages.epoques.add(e);
-        majPreparation();
-      });
+      c.bouton.addEventListener('click', () => basculer(reglages.epoques, e));
       cases.epoques[e] = c;
       liste.append(c.bouton);
     });
-    groupe.replaceChildren(tete, liste);
+    $('premier-periodes').replaceChildren(hautPeriode.tete, liste);
 
-    // Difficulté : trois cartes, une seule choisie
-    $('premier-niveaux').replaceChildren(...Object.entries(NIVEAUX).map(([k, n]) => {
+    // Difficulté : « Tout ◯ Aucun » et trois cartes cumulables
+    const hautNiveau = enteteFiltre('Difficulté', Object.keys(NIVEAUX), reglages.niveaux);
+    bascules.niveaux = hautNiveau.bascule;
+    const grille = el('div', 'premier-niveaux');
+    grille.setAttribute('role', 'group');
+    grille.setAttribute('aria-label', 'Difficulté');
+    Object.entries(NIVEAUX).forEach(([k, n]) => {
       const c = caseCarte('puce--niveau', '', n.titre, n.aide);
-      c.bouton.addEventListener('click', () => { reglages.niveau = k; majPreparation(); });
+      c.bouton.addEventListener('click', () => basculer(reglages.niveaux, k));
       cases.niveaux[k] = c;
-      return c.bouton;
-    }));
+      grille.append(c.bouton);
+    });
+    $('premier-difficultes').replaceChildren(hautNiveau.tete, grille);
   }
 
   function majPreparation() {
     // Le nombre d'une case tient compte de l'autre filtre
     const toutes = new Set(Object.keys(EPOQUES()));
     Object.entries(cases.epoques).forEach(([e, c]) => {
-      const n = PERSONNES.filter((p) => p.epoque === e && passe(p, reglages.niveau, toutes)).length;
+      const n = PERSONNES.filter((p) => p.epoque === e && passe(p, reglages.niveaux, toutes)).length;
       const actif = reglages.epoques.has(e);
       c.n.textContent = nombre(n);
       c.bouton.classList.toggle('is-active', actif);
@@ -235,25 +278,25 @@
       c.bouton.setAttribute('aria-pressed', actif);
     });
     const coches = reglages.epoques.size;
-    const etat = coches === 0 ? 'aucun' : coches === toutes.size ? 'tout' : 'partiel';
-    bascule.dataset.etat = etat;
-    bascule.setAttribute('aria-checked', etat === 'tout');
+    majBascule(bascules.epoques, coches, toutes.size);
     Object.entries(cases.niveaux).forEach(([k, c]) => {
-      const n = PERSONNES.filter((p) => passe(p, k, reglages.epoques)).length;
-      const actif = k === reglages.niveau;
+      const n = PERSONNES.filter((p) => passe(p, new Set([k]), reglages.epoques)).length;
+      const actif = reglages.niveaux.has(k);
       c.n.textContent = nombre(n);
       c.bouton.classList.toggle('is-active', actif);
       c.bouton.classList.toggle('is-vide', n === 0);
       c.bouton.setAttribute('aria-pressed', actif);
     });
+    majBascule(bascules.niveaux, reglages.niveaux.size, Object.keys(NIVEAUX).length);
 
     const v = selection();
     const jouable = v.length >= MIN_PERSONNES && unePaire(v);
-    const r = record(reglages.niveau);
+    const r = record(reglages.niveaux);
     let texte;
     if (!coches) texte = 'Choisissez au moins une période.';
+    else if (!reglages.niveaux.size) texte = 'Choisissez au moins une difficulté.';
     else if (!jouable) texte = (v.length ? 'Seulement ' + pluriel(v.length, 'personnage') : 'Aucun personnage') + ' pour ces choix : il en faut au moins ' + MIN_PERSONNES + '.';
-    else texte = pluriel(v.length, 'personnage') + ' à tirer' + (r ? ' · votre record en ' + NIVEAUX[reglages.niveau].titre.toLowerCase() + ' : ' + nombre(r) : '') + '.';
+    else texte = pluriel(v.length, 'personnage') + ' à tirer' + (r ? ' · votre record : ' + nombre(r) : '') + '.';
     const ligne = $('premier-etat');
     ligne.textContent = texte;
     ligne.classList.toggle('chrono-etat--non', !jouable);
@@ -264,7 +307,7 @@
   function ouvrir() {
     arreterMinuterie();
     partie = null;
-    if (!bascule) construirePreparation();
+    if (!bascules.epoques) construirePreparation();
     majPreparation();
     Histehory.afficher('screen-premier-config');
   }
@@ -280,9 +323,9 @@
     const vivier = selection();
     if (vivier.length < MIN_PERSONNES) return;
     partie = {
-      niveau: reglages.niveau, epoques: Array.from(reglages.epoques), vivier, pioche: [],
+      niveaux: Array.from(reglages.niveaux), epoques: Array.from(reglages.epoques), vivier, pioche: [],
       recents: [], nbRecents: Math.floor(vivier.length / 2),
-      cadres: {}, score: 0, ancienRecord: record(reglages.niveau), debut: Date.now(),
+      cadres: {}, score: 0, ancienRecord: record(reglages.niveaux), debut: Date.now(),
       repondu: false, suite: null, erreur: null
     };
     const paire = nouvellePaire([]);
@@ -306,8 +349,9 @@
     const img = portrait(p);
     cadre.style.setProperty('--portrait', img ? 'url("' + img + '")' : 'none');
     cadre.querySelector('.cadre__nom').textContent = p.nom;
+    // Pays · domaine, mais jamais l'époque : elle donnerait la réponse (Antiquité contre XXe siècle)
     cadre.querySelector('.cadre__info').textContent =
-      [p.pays, (H.DOMAINES || {})[p.domaine], (H.EPOQUES || {})[p.epoque]].filter(Boolean).join(' · ');
+      [p.pays, (H.DOMAINES || {})[p.domaine]].filter(Boolean).join(' · ');
   }
   // La date : connue (celle de celui qui reste, ou révélée par la réponse), sinon « Né en ? »
   function afficherDate(cadre, x) {
@@ -431,12 +475,12 @@
   function terminer() {
     arreterMinuterie();
     const p = partie, tempsMs = Date.now() - p.debut;
-    const niveau = NIVEAUX[p.niveau].titre, periodes = periodesTexte(p.epoques);
+    const niveau = niveauxTexte(p.niveaux), periodes = periodesTexte(p.epoques);
     const toutes = p.epoques.length === Object.keys(EPOQUES()).length;
     const titre = 'Qui est venu en premier ? (' + niveau + (toutes ? '' : ', ' + periodes) + ')';
     const total = p.score + (p.erreur ? 1 : 0);
     if (window.HistProfils && total > 0) {
-      HistProfils.enregistrerPartie({ mode: 'premier', titre, score: p.score, total, tempsMs, record: 'premier.' + p.niveau });
+      HistProfils.enregistrerPartie({ mode: 'premier', titre, score: p.score, total, tempsMs, record: 'premier.' + cleRecord(new Set(p.niveaux)) });
     }
 
     const s = p.score;
@@ -469,7 +513,7 @@
   /* ---------- Branchements ---------- */
   function init() {
     $('premier-commencer').addEventListener('click', demarrer);
-    $('premier-rejouer').addEventListener('click', () => { if (!bascule) construirePreparation(); demarrer(); });
+    $('premier-rejouer').addEventListener('click', () => { if (!bascules.epoques) construirePreparation(); demarrer(); });
     $('premier-reglages').addEventListener('click', ouvrir);
     $('premier-a').addEventListener('click', () => repondre('a'));
     $('premier-b').addEventListener('click', () => repondre('b'));
