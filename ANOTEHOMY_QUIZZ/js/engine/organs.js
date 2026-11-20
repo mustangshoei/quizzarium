@@ -3,20 +3,19 @@
    ORGANES (jeu "Les organes") : modele Z-Anatomy charge a la demande
    (js/data/organ-model.js), un objet cliquable par organe et par cote du corps
    (fabrique commune : js/engine/systems.js). Chaque organe a sa couleur
-   (js/data/organs.js), sinon celle de son appareil. Le squelette est en
-   decor, en transparence. Corps masculin ou feminin : les organes d'un seul
-   sexe sont caches dans l'autre corps.
+   (js/data/organs.js), sinon celle de son appareil, avec l'aspect d'un tissu
+   (js/engine/tissue.js : humide, creux assombris par l'occlusion ambiante du
+   modele, grain). Le squelette est en decor, en transparence. Corps masculin
+   ou feminin : les organes d'un seul sexe sont caches dans l'autre corps.
    ========================================================================== */
 (function (NS) {
   'use strict';
 
-  /* un materiau par couleur */
-  const mats = {};
+  /* un materiau par couleur (partage) ; le modele porte l'occlusion ambiante de chaque sommet */
   function material(def) {
     const D = AQ.data;
     const c = (def && (def.color || (D.ORGAN_SYSTEM[def.system] || {}).c)) || 0xd8a8a0;
-    if (!mats[c]) mats[c] = new THREE.MeshStandardMaterial({ color: c, roughness: 0.55, metalness: 0 });
-    return mats[c];
+    return NS.tissueMaterial(c, !!(D.ORGAN_MODEL && D.ORGAN_MODEL.ao));
   }
 
   const sys = NS.makeSystem({

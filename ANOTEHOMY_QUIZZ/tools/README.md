@@ -14,10 +14,12 @@ ou la liste des os, des muscles, des vaisseaux et des organes.
 | `build-model.ps1` | Squelette et os detailles : telecharge BodyParts3D (une seule fois), simplifie, emballe |
 | `build-muscles.ps1` | Muscles : telecharge Z-Anatomy (une seule fois), regroupe par muscle, simplifie, emballe |
 | `build-vessels.ps1` | Vaisseaux : telecharge Z-Anatomy (une seule fois), regroupe par vaisseau, simplifie, emballe |
-| `build-organs.ps1` | Organes : telecharge Z-Anatomy et HuBMAP (une seule fois), recale les organes feminins, regroupe par organe, simplifie, emballe |
+| `build-organs.ps1` | Organes : telecharge Z-Anatomy et HuBMAP (une seule fois), recale les organes feminins et ceux pris a HuBMAP, regroupe par organe, bouche, subdivise, simplifie, calcule l'occlusion ambiante, emballe |
 | `build-splanchno.ps1` | Organes detailles : un fichier par organe, parties regroupees, mises a l'echelle, simplifiees |
 | `GlbRead.cs` | Lecture des fichiers glTF binaires (HuBMAP), recalage, formes generees (tubes, ellipsoides) |
-| `MeshBuild.cs` | Traitement en C# (compile automatiquement par PowerShell, rien a installer) |
+| `MeshBuild.cs` | Traitement en C# (compile automatiquement par PowerShell, rien a installer) : lecture OBJ, soudure, simplification (aussi a erreur commune), emballage |
+| `MeshFix.cs` | Organes : orientation des faces, bouchage des trous, subdivision de Loop, occlusion ambiante par sommet |
+| `Register.cs` | Recalage d'un modele sur un autre (similitude par ICP) |
 | `FbxRead.cs` | Lecture des fichiers FBX binaires de Z-Anatomy (maillages, transformations) |
 | `Visibility.cs` | Vues ou chaque muscle est visible, et muscles profonds (rendu logiciel par identifiant) |
 | `bp3d-map.csv` | Table de correspondance os du jeu <-> concept BodyParts3D (une ligne par instance) |
@@ -126,13 +128,40 @@ listes dans `%TEMP%\anotehomy-zanatomy\vaisseaux-non-utilises.txt`.
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File tools\build-organs.ps1
-# plus de detail (fichier plus lourd)
-powershell -ExecutionPolicy Bypass -File tools\build-organs.ps1 -Budget 450000
+# modele plus leger (fichier d'environ 5 Mo au lieu de 8,7 Mo)
+powershell -ExecutionPolicy Bypass -File tools\build-organs.ps1 -Budget 600000
 ```
 
 Le premier lancement telecharge environ 180 Mo (systemes visceral, lymphoide, nerveux,
-cardiovasculaire et squelette de Z-Anatomy, format FBX) dans `%TEMP%\anotehomy-zanatomy` ; les
-suivants prennent moins d'une minute.
+cardiovasculaire et squelette de Z-Anatomy, format FBX) dans `%TEMP%\anotehomy-zanatomy`, et environ
+450 Mo (organes de reference de la femme et de l'homme du Human Reference Atlas) dans
+`%TEMP%\anotehomy-hra` ; les suivants prennent moins d'une minute.
+
+Options : `-Budget` (triangles au total, organes et squelette : 1 000 000), `-MinTris` / `-MaxTris`
+(plancher et plafond par organe), `-DecoRatio` (part des triangles du squelette en decor),
+`-SubdivEdge` (longueur moyenne des aretes, en mm, au-dela de laquelle un organe est subdivise),
+`-AoRays` (rayons par sommet pour l'occlusion ambiante).
+
+Etapes (`MeshFix.cs`, `Register.cs`, `MeshBuild.cs`) :
+
+1. faces remises vers l'exterieur si le volume signe de l'organe est negatif (cavites modelisees a
+   l'envers) ; trous bouches pour les organes qui ont l'option `b` (voir plus bas) ;
+2. organes grossiers (aretes de plus de `-SubdivEdge` mm en moyenne) subdivises par Loop, une fois, deux
+   fois au-dela du double : leurs contours deviennent lisses ;
+3. simplification a **erreur geometrique commune** (`Builder.TargetsByError`) : chaque organe est d'abord
+   simplifie a fond en notant son nombre de triangles a chaque palier d'erreur ; on garde le palier le
+   plus fin qui tient dans le budget. Les formes complexes (circonvolutions, anses, anneaux de la
+   trachee) gardent donc beaucoup de triangles, les surfaces lisses peu ;
+4. occlusion ambiante de chaque organe sur lui-meme (`Occlusion.Compute` : rayons sur un arbre de
+   volumes englobants ; portee : un quart de la taille de l'organe, entre 3 et 40 mm), un octet par
+   sommet a la fin des donnees (`ao: true`), lu par `js/engine/model.js` et utilise par
+   `js/engine/tissue.js` ;
+5. vues ou chaque organe est visible (`Visibility.cs`), emballage.
+
+Le journal liste aussi les plus grands **bords libres** restants (rayon d'au moins 12 mm) : cavites du
+coeur ouvertes la ou elles s'emboitent, lobes temporaux ouverts sur l'insula, vessie feminine HuBMAP.
+Ce sont des ouvertures du modele, visibles comme des parois (les organes sont dessines des deux
+cotes) ; une ouverture qui n'a rien d'anatomique se bouche avec l'option `b`.
 
 La liste des organes est le catalogue `js/data/organs.js` : chaque entree donne les noms des objets
 Z-Anatomy de l'organe (sans le suffixe `.r` / `.l`), pris dans n'importe lequel de ces fichiers ; les
@@ -151,6 +180,17 @@ que pour les vaisseaux (option `u: 1` pour un organe impair).
   glandes vestibulaires majeures, ureteres prolonges jusqu'a la vessie feminine).
 - Option `s: 'm'` ou `s: 'f'` : organe d'un seul sexe. Les vues ou chaque organe est visible sont
   calculees une fois par sexe du corps.
+- Option `h: ['VH_M_...', ...]` : l'organe est pris aux organes de reference de **l'homme** du Human
+  Reference Atlas (fichier `united-male.glb`, environ 240 Mo, v1.10) au lieu de Z-Anatomy, quand ils sont
+  nettement plus fins (langue, tonsilles palatines). Ils sont recales sur la bouche Z-Anatomy par une
+  similitude ajustee par ICP (`Register.cs`) sur les dents, l'os hyoide et les cartilages thyroide et
+  cricoide des deux modeles ; une paire (tonsilles) est recentree sur le plan median des dents. Pour un
+  autre organe, comparer d'abord les deux modeles : la plupart des organes de Z-Anatomy (intestins,
+  foie, poumons, larynx, trachee, oeil) sont plus detailles que ceux de HuBMAP.
+- Option `b: 20` : les trous du maillage dont le rayon depasse 20 mm sont bouches par une piece en
+  anneaux, lissee (fairing bilaplacien : elle prolonge la courbure autour du trou). Utilisee pour la
+  fenetre de la face anterieure de l'estomac ; ne pas la mettre sur un organe dont les ouvertures sont
+  anatomiques (cavites du coeur, cardia, pylore).
 
 ## Organes detailles (`build-splanchno.ps1`)
 

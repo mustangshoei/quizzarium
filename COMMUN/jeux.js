@@ -67,7 +67,7 @@
         { id: 'morpion-monde', nom: 'Le morpion du monde', groupe: 'Monde', variantes: DUEL, bientot: true },
         { id: 'grand-chemin-monde', nom: 'Le Grand Chemin du monde', groupe: 'Monde', bientot: true }
       ] },
-    { id: 'anotehomy', dossier: 'ANOTEHOMY_QUIZZ', nom: 'Anotehomy Quizz', icone: '🦴', version: '2.5.0',
+    { id: 'anotehomy', dossier: 'ANOTEHOMY_QUIZZ', nom: 'Anotehomy Quizz', icone: '🦴', version: '2.5.1',
       couleur: '#3a1529', accent: '#ff5c8a',
       description: 'Anatomie humaine en 3D : os, ostéologie descriptive, muscles, vaisseaux sanguins, organes, splanchnologie descriptive ; pathologies, termes médicaux.',
       totaux: { cle: 'totals', parties: 'played', bonnes: 'ok', questions: 'questions', temps: 'time', ms: false },

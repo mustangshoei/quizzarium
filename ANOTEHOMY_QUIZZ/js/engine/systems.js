@@ -45,7 +45,7 @@
       group.visible = false;
       const catalog = o.catalog();
       parts.forEach(p => {
-        const g = NS.makeGeometry(p.positions, p.indices);
+        const g = NS.makeGeometry(p.positions, p.indices, p.ao);
         if (p.kind !== 'b') {
           const m = new THREE.Mesh(g, (o.decor && o.decor(p.kind)) || ghostBone());
           m.raycast = () => {};          /* decor : jamais touche par le lancer de rayon */
@@ -55,7 +55,7 @@
         }
         const def = catalog[p.bone];
         const rest = o.material(def);
-        const mesh = new THREE.Mesh(g, rest);
+        const mesh = NS.accelerate(new THREE.Mesh(g, rest));   /* lancer de rayon par BVH (js/engine/bvh.js) */
         mesh.userData.rest = rest;
         const s = g.boundingSphere, views = visibility(p.label), v = views[0];
         const inst = { bone: p.bone, side: p.side, label: null, mesh, views,

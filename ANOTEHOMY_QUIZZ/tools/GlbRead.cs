@@ -371,7 +371,15 @@ public static class Shape
                 if (e == 0) { m.T.Add(tip); m.T.Add(a); m.T.Add(b); } else { m.T.Add(tip); m.T.Add(b); m.T.Add(a); }
             }
         }
+        FlipFaces(m);
         return m;
+    }
+
+    // inverse le sens des triangles : les formes ci-dessus sont construites faces vers l'interieur ;
+    // retournees, leurs faces regardent vers l'exterieur (rendu, occlusion ambiante)
+    static void FlipFaces(Mesh m)
+    {
+        for (int t = 0; t + 2 < m.T.Count; t += 3) { int x = m.T[t + 1]; m.T[t + 1] = m.T[t + 2]; m.T[t + 2] = x; }
     }
 
     // ellipsoide de centre c, demi-axes a (le long de "dir"), b et cc (perpendiculaires ; b le plus horizontal)
@@ -397,6 +405,7 @@ public static class Shape
                 if (i > 0) { m.T.Add(p); m.T.Add(q); m.T.Add(r); }
                 if (i < lat - 1) { m.T.Add(q); m.T.Add(s); m.T.Add(r); }
             }
+        FlipFaces(m);
         return MeshIO.MergeWeld(new[] { m });
     }
 }

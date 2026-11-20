@@ -42,7 +42,7 @@
       other: 'un autre organe',
       fit: 'Voir tout le corps (touche 0)',
       target: 'Recentrer sur l\'organe en cours',
-      credits: 'Modèle 3D : Z-Anatomy, CC BY-SA 4.0'
+      credits: 'Modèle 3D : Z-Anatomy, CC BY-SA 4.0 ; HuBMAP, CC BY 4.0'
     },
     pool,
 

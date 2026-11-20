@@ -7,7 +7,8 @@
      - js/data/muscle-model.js   : muscles et squelette Z-Anatomy (a la demande,
        voir js/engine/muscles.js).
    Format : base64(gzip(positions Int16 x 3 | indices Uint16 locaux a chaque
-   partie | [element d'origine Uint8 par triangle])).
+   partie | [element d'origine Uint8 par triangle] | [occlusion ambiante Uint8
+   par sommet, si "ao: true" : js/data/organ-model.js])).
    ========================================================================== */
 (function (NS) {
   'use strict';
@@ -27,9 +28,11 @@
     return new Response(stream).arrayBuffer();
   }
 
-  function makeGeometry(positions, indices) {
+  /* ao (facultatif) : occlusion ambiante par sommet, 0 à 255 (attribut « ao », lu par js/engine/tissue.js) */
+  function makeGeometry(positions, indices, ao) {
     const g = new THREE.BufferGeometry();
     g.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    if (ao) g.setAttribute('ao', new THREE.BufferAttribute(ao, 1, true));
     g.setIndex(new THREE.BufferAttribute(indices, 1));
     g.computeVertexNormals();
     g.computeBoundingBox();
@@ -37,13 +40,14 @@
     return g;
   }
 
-  /* Promesse -> [{ kind, bone, side, label, positions, indices, tags }]
+  /* Promesse -> [{ kind, bone, side, label, positions, indices, tags, ao }]
      kind : "b" = os cliquable, "d" = decor (cartilages costaux, dents) */
   function decode(M) {
     return gunzip(base64ToBytes(M.data)).then(buf => {
       const q = new Int16Array(buf, 0, M.vertices * 3);
       const idx = new Uint16Array(buf, M.vertices * 6, M.indices);
       const tags = M.tags ? new Uint8Array(buf, M.vertices * 6 + M.indices * 2, M.indices / 3) : null;
+      const ao = M.ao ? new Uint8Array(buf, M.vertices * 6 + M.indices * 2 + (M.tags ? M.indices / 3 : 0), M.vertices) : null;
       const parts = [];
       let vo = 0, io = 0;
       M.parts.forEach(([kind, bone, side, label, vc, ic]) => {
@@ -56,7 +60,8 @@
           p[i + 2] = (q[s + 2] + 32768) * M.scale + M.min[2];
         }
         parts.push({ kind, bone, side: side || null, label: label || null, positions: p,
-          indices: idx.slice(io, io + ic), tags: tags ? tags.slice(io / 3, (io + ic) / 3) : null });
+          indices: idx.slice(io, io + ic), tags: tags ? tags.slice(io / 3, (io + ic) / 3) : null,
+          ao: ao ? ao.slice(vo, vo + vc) : null });
         vo += vc;
         io += ic;
       });

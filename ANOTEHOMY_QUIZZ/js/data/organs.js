@@ -16,7 +16,11 @@
                    fausse), u (organe impair : une seule instance, meme si Z-Anatomy le coupe en
                    deux moities ou le nomme « droit » / « gauche »), c (couleur, sinon celle de
                    l'appareil), s (sexe du corps : 'm' masculin, 'f' feminin ; sans : les deux),
-                   th (objets HuBMAP recales sur le thorax)
+                   th (objets HuBMAP recales sur le thorax), h (objets des organes de reference
+                   de l'homme, « VH_M_... » (HuBMAP), pris a la place des objets Z-Anatomy quand ils
+                   sont nettement plus fins ; recales sur la bouche Z-Anatomy), b (rayon en mm a
+                   partir duquel les trous du maillage, qui ne sont pas anatomiques, sont bouches)
+                   ; h et b ne servent qu'a tools/build-organs.ps1
    Cote du corps : suffixe Z-Anatomy (.r / .l), sinon « Right » / « Left » dans le nom, sinon
    position du maillage (tools/build-organs.ps1).
    Sexe du corps : le modele Z-Anatomy est masculin. Le corps feminin remplace les organes genitaux
@@ -25,7 +29,8 @@
    nappe qui recouvre l'uterus et ses annexes) n'est propose qu'en splanchnologie descriptive.
    Une entree tient sur UNE ligne : tools/build-organs.ps1 lit les objets Z-Anatomy
    directement dans ce fichier.
-   Modele 3D : Z-Anatomy (CC BY-SA 4.0), voir CREDITS.md.
+   Modele 3D : Z-Anatomy (CC BY-SA 4.0) ; langue, tonsilles palatines et organes feminins :
+   HuBMAP (CC BY 4.0) ; voir CREDITS.md.
    ========================================================================== */
 (function (NS) {
   'use strict';
@@ -50,7 +55,7 @@
   }
 
   /* ---------------- Appareil digestif ---------------- */
-  G('lingua', 'digestif', 'langue', 'lingua', 1, ['Tongue'], { u: 1, c: 0xc65a5c });
+  G('lingua', 'digestif', 'langue', 'lingua', 1, ['Tongue'], { u: 1, c: 0xc65a5c, h: ['VH_M_dorsal_tongue', 'VH_M_ventral_tongue', 'VH_M_posterior_part_of_tongue', 'VH_M_circumvallate_papillae', 'VH_M_fungiform_papillae'] });
   G('palatum_molle', 'digestif', 'palais mou', 'palatum molle', 1, ['Soft palate'], { old: ['voile du palais'], u: 1, c: 0xd77e80 });
   G('uvula_palatina', 'digestif', 'uvule palatine', 'uvula palatina', 1, ['Uvula of palate'], { alt: ['luette'], u: 1, c: 0xd77e80 });
   G('gingiva', 'digestif', 'gencive', 'gingiva', 0, ['Gingiva'], { alt: ['gencives'], u: 1, c: 0xe39a9a });
@@ -63,7 +68,7 @@
   G('pars_oralis_pharyngis', 'digestif', 'oropharynx', 'pars oralis pharyngis', 1, ['Oropharynx'], { alt: ['partie orale du pharynx', 'mésopharynx'], u: 1, c: 0xd48078 });
   G('pars_laryngea_pharyngis', 'digestif', 'laryngopharynx', 'pars laryngea pharyngis', 1, ['Laryngopharynx'], { alt: ['partie laryngée du pharynx', 'hypopharynx'], u: 1, c: 0xd48078 });
   G('oesophagus', 'digestif', 'œsophage', 'oesophagus', 1, ['Oesophagus'], { u: 1, c: 0xc97a70 });
-  G('gaster', 'digestif', 'estomac', 'gaster', 1, ['Stomach'], { u: 1, c: 0xe39484 });
+  G('gaster', 'digestif', 'estomac', 'gaster', 1, ['Stomach'], { u: 1, c: 0xe39484, b: 20 });
   G('duodenum', 'digestif', 'duodénum', 'duodenum', 1, ['Duodenum'], { u: 1, c: 0xe8a080 });
   G('jejunum_ileum', 'digestif', 'jéjunum et iléon', 'jejunum et ileum', 1, ['Jejunum'], { alt: ['intestin grêle', 'jéjuno-iléon', 'jéjunum', 'iléon'], u: 1, c: 0xeaa98e });
   G('colon_ascendens', 'digestif', 'côlon ascendant', 'colon ascendens', 1, ['Ascending colon'], { alt: ['caecum et côlon ascendant'], old: ['côlon droit'], u: 1, c: 0xd59a76 });
@@ -147,7 +152,7 @@
   /* ---------------- Organes lymphoïdes ---------------- */
   G('splen', 'lymphatique', 'rate', 'splen', 1, ['Spleen'], { alt: ['lien'], u: 1, c: 0x6e2c4c });
   G('thymus', 'lymphatique', 'thymus', 'thymus', 1, ['Left lobe of thymus', 'Right lobe of thymus'], { u: 1, c: 0xead0a8 });
-  G('tonsilla_palatina', 'lymphatique', 'tonsille palatine', 'tonsilla palatina', 1, ['Palatine tonsil'], { old: ['amygdale palatine'], c: 0xd88084 });
+  G('tonsilla_palatina', 'lymphatique', 'tonsille palatine', 'tonsilla palatina', 1, ['Palatine tonsil'], { old: ['amygdale palatine'], c: 0xd88084, h: ['VH_M_palatine_tonsil_L', 'VH_M_palatine_tonsil_R'] });
   G('nodi_submandibulares', 'lymphatique', 'nœuds submandibulaires', 'nodi lymphoidei submandibulares', 0, ['Submandibular nodes'], { alt: ['nœuds lymphatiques submandibulaires'], old: ['ganglions sous-maxillaires'] });
   G('nodi_submentales', 'lymphatique', 'nœuds submentaux', 'nodi lymphoidei submentales', 0, ['Submental nodes'], { alt: ['nœuds lymphatiques submentaux'], old: ['ganglions sous-mentaux'] });
   G('nodi_parotidei', 'lymphatique', 'nœuds parotidiens', 'nodi lymphoidei parotidei', 0, ['Superficial parotid nodes', 'Infra-auricular nodes', 'Intraglandular parotid nodes', 'Pre-auricular nodes'], { alt: ['nœuds lymphatiques parotidiens'], old: ['ganglions parotidiens'] });

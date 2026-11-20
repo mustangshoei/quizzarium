@@ -9,9 +9,9 @@
 (function (NS) {
   'use strict';
 
-  /* un materiau par couleur, visible des deux cotes (nappes : ligaments, conjonctive) */
-  const mats = {};
-  const material = c => mats[c] || (mats[c] = new THREE.MeshStandardMaterial({ color: c, roughness: 0.55, metalness: 0, side: THREE.DoubleSide }));
+  /* un materiau par couleur, aspect d'un tissu (js/engine/tissue.js), visible des deux cotes (nappes :
+     ligaments, conjonctive) ; ces modeles n'ont pas d'occlusion ambiante */
+  const material = c => NS.tissueMaterial(c, false);
 
   /* chargement unique de chaque organe */
   const loading = {};
@@ -37,7 +37,7 @@
       if (!part) return;
       const g = NS.makeGeometry(p.positions, p.indices);
       const rest = material(part.color || def.color);
-      const mesh = new THREE.Mesh(g, rest);
+      const mesh = NS.accelerate(new THREE.Mesh(g, rest));     /* lancer de rayon par BVH (js/engine/bvh.js) */
       mesh.userData.rest = rest;
       /* vues ou la partie est visible et part visible en % (tools/build-splanchno.ps1, Visibility.cs) */
       const [views, pct] = String(p.label || '').split(';');

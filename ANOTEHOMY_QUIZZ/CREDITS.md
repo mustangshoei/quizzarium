@@ -65,16 +65,38 @@ Les organes du jeu « Les organes » (avec le squelette affiché en transparence
   (cavités et valves du cœur) et `SkeletalSystem100.fbx` (cartilages du larynx et du nez, osselets,
   squelette))
 - Licence : [Creative Commons Attribution-ShareAlike 4.0 International (CC BY-SA 4.0)](https://creativecommons.org/licenses/by-sa/4.0/)
-- Modifications apportées pour ce projet (`tools/build-organs.ps1`) :
+- Modifications apportées pour ce projet (`tools/build-organs.ps1`, `tools/MeshFix.cs`) :
   - regroupement des maillages par organe (parties réunies, un objet par côté du corps), selon le
     catalogue `js/data/organs.js` (noms TA2 en français) ; la moelle spinale est représentée par sa
-    seule substance blanche ;
+    seule substance blanche ; la langue et les tonsilles palatines ne sont pas reprises (elles viennent du
+    Human Reference Atlas, voir plus bas) ;
+  - faces remises vers l'extérieur là où le modèle les tourne vers l'intérieur (canal central de la
+    moelle, cochlée, vestibule) ; fenêtre ronde de la face antérieure de l'estomac bouchée par une pièce
+    lissée (« fairing » bilaplacien) ;
   - squelette en décor ;
-  - simplification des maillages (environ 340 000 triangles au total), quantification 16 bits,
-    compression gzip ;
+  - subdivision de Loop des organes grossiers, puis simplification à erreur géométrique commune (environ
+    un million de triangles au total), occlusion ambiante de chaque organe sur lui-même (un octet par
+    sommet), quantification 16 bits, compression gzip ;
   - calcul des vues où chaque organe est visible (`tools/Visibility.cs`).
 - En conséquence, **`js/data/organ-model.js` est distribué sous la même licence CC BY-SA 4.0**
   (partage dans les mêmes conditions, avec cette attribution).
+
+## Langue et tonsilles palatines : Human Reference Atlas (HuBMAP), organes de l'homme
+
+La langue (avec ses papilles) et les tonsilles palatines du jeu « Les organes » proviennent des organes
+de référence de l'homme du **Human Reference Atlas** :
+
+- Kristen Browne et Heidi Schlehlein, Human Reference Atlas / HuBMAP, *3D Reference Organ Set for Male
+  v1.10* (2026), construit à partir du Visible Human Male (National Library of Medicine).
+- Source : https://lod.humanatlas.io/ref-organ/united-male/v1.10 (fichier `3d-vh-m-united.glb`,
+  objets `VH_M_dorsal_tongue`, `VH_M_ventral_tongue`, `VH_M_posterior_part_of_tongue`,
+  `VH_M_circumvallate_papillae`, `VH_M_fungiform_papillae`, `VH_M_palatine_tonsil_L` et `_R`),
+  DOI https://doi.org/10.48539/HBM833.WZWN.425
+- Licence : [Creative Commons Attribution 4.0 International (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/)
+- Modifications apportées pour ce projet (`tools/build-organs.ps1`, `tools/Register.cs`) : recalage sur
+  la bouche du modèle Z-Anatomy (similitude ajustée par ICP sur les dents, l'os hyoïde et les cartilages
+  thyroïde et cricoïde des deux modèles), tonsilles recentrées sur le plan médian, subdivision,
+  simplification, occlusion ambiante ; elles sont rangées dans `js/data/organ-model.js`.
 
 ## Organes de référence de la femme : Human Reference Atlas (HuBMAP)
 
@@ -158,4 +180,9 @@ Licence : [SIL Open Font License 1.1](https://openfontlicense.org) ; texte compl
   Simplification* de Sven Forstmann (licence MIT), lui-même fondé sur la métrique d'erreur
   quadrique de Garland et Heckbert (1997).
 - Lissage des os détaillés : subdivision de Loop (Charles Loop, 1987), implémentée dans
-  `js/engine/segment.js`.
+  `js/engine/segment.js` ; même subdivision pour les organes grossiers, dans `tools/MeshFix.cs`.
+- Organes (`tools/MeshFix.cs`, `tools/Register.cs`, `js/engine/bvh.js`, écrits pour ce projet) : bouchage
+  des trous par une pièce lissée (« fairing » bilaplacien, d'après Kobbelt, 1998), occlusion ambiante par
+  lancer de rayons, recalage par ICP (Besl et McKay, 1992) avec la solution de Horn (quaternions, 1987),
+  arbre de volumes englobants pour le lancer de rayon dans le navigateur. Hachage des clés 64 bits :
+  mélange « splitmix64 » (Sebastiano Vigna, domaine public).

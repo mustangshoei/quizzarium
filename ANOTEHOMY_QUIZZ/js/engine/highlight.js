@@ -32,6 +32,12 @@
     NS.MAT.ko.color.setHex(p.mk[0]); NS.MAT.ko.emissive.setHex(p.mk[1]);
     NS.MAT.hover.color.setHex(p.hv[0]); NS.MAT.hover.emissive.setHex(p.hv[1]);
     hoverGlowColor = p.hg;
+    /* organes : visibles des deux cotes (cavites ouvertes du coeur, bouts des conduits), marques comprises */
+    const side = name === 'organ' ? THREE.DoubleSide : THREE.FrontSide;
+    ['hover', 'target', 'ko', 'ok'].forEach(k => {
+      const m = NS.MAT[k];
+      if (m.side !== side) { m.side = side; m.needsUpdate = true; }
+    });
     document.body.classList.toggle('pal-muscle', name === 'muscle');
     document.body.classList.toggle('pal-vessel', name === 'vessel');
     document.body.classList.toggle('pal-organ', name === 'organ');

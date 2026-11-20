@@ -15,6 +15,22 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Text;
 
+// cles 64 bits (aretes, positions quantifiees) : le hachage par defaut de .NET (XOR des deux moitiees)
+// donne enormement de collisions sur les maillages reguliers ; melange "splitmix64"
+public sealed class Key64 : IEqualityComparer<long>
+{
+    public static readonly Key64 Instance = new Key64();
+    public bool Equals(long a, long b) { return a == b; }
+    public int GetHashCode(long x)
+    {
+        ulong z = (ulong)x + 0x9E3779B97F4A7C15UL;
+        z = (z ^ (z >> 30)) * 0xBF58476D1CE4E5B9UL;
+        z = (z ^ (z >> 27)) * 0x94D049BB133111EBUL;
+        z ^= z >> 31;
+        return (int)z ^ (int)(z >> 32);
+    }
+}
+
 public class Mesh
 {
     public List<double> P = new List<double>();   // x,y,z,x,y,z...
@@ -81,7 +97,7 @@ public static class MeshIO
     public static Mesh MergeWeld(IList<Mesh> parts)
     {
         var res = new Mesh();
-        var map = new Dictionary<long, int>();
+        var map = new Dictionary<long, int>(Key64.Instance);
         for (int pi = 0; pi < parts.Count; pi++)
         {
             var m = parts[pi];
@@ -323,7 +339,11 @@ public class QemSimplifier
         verts = nv;
     }
 
-    public void Simplify(int targetCount, double aggressiveness)
+    public void Simplify(int targetCount, double aggressiveness) { Simplify(targetCount, aggressiveness, null); }
+
+    // trace : nombre de triangles avant chaque passe (paliers d'erreur communs a tous les maillages :
+    // seuil = 1e-9 * (passe + 3) ^ aggressiveness), voir Builder.TargetsByError
+    public void Simplify(int targetCount, double aggressiveness, List<int> trace)
     {
         foreach (var t in tris) t.deleted = false;
         int deletedTriangles = 0;
@@ -331,6 +351,7 @@ public class QemSimplifier
         double px, py, pz;
         for (int iteration = 0; iteration < 100; iteration++)
         {
+            if (trace != null) trace.Add(triangleCount - deletedTriangles);
             if (triangleCount - deletedTriangles <= targetCount) break;
             if (iteration % 5 == 0) UpdateMesh(iteration);
             foreach (var t in tris) t.dirty = false;
@@ -528,17 +549,78 @@ public static class Builder
     public static string Simplify(List<Part> parts, int[] targets, double aggressiveness)
     {
         var sb = new StringBuilder();
+        var res = new Mesh[parts.Count];
+        System.Threading.Tasks.Parallel.For(0, parts.Count, i =>
+        {
+            var p = parts[i];
+            if (targets[i] >= p.Mesh.TriCount) { res[i] = p.Mesh; return; }
+            var s = new QemSimplifier(p.Mesh);
+            s.Simplify(targets[i], aggressiveness);
+            res[i] = s.ToMesh();
+        });
         for (int i = 0; i < parts.Count; i++)
         {
             var p = parts[i];
-            if (targets[i] >= p.Mesh.TriCount) continue;
-            var s = new QemSimplifier(p.Mesh);
-            s.Simplify(targets[i], aggressiveness);
-            var m = s.ToMesh();
-            if (m.TriCount < targets[i] * 0.5) sb.AppendLine("ATTENTION " + p.Bone + " " + p.Label + " : " + m.TriCount + " / " + targets[i]);
-            p.Mesh = m;
+            if (res[i].TriCount < targets[i] * 0.5) sb.AppendLine("ATTENTION " + p.Bone + " " + p.Label + " : " + res[i].TriCount + " / " + targets[i]);
+            p.Mesh = res[i];
         }
         return sb.ToString();
+    }
+
+    // Objectifs par erreur geometrique commune : chaque partie cliquable est d'abord simplifiee a fond
+    // en notant son nombre de triangles a chaque palier d'erreur (les memes pour toutes : voir
+    // QemSimplifier) ; on garde le palier le plus fin qui tient dans le budget, donc plus de triangles
+    // la ou la forme est complexe (circonvolutions, anses, anneaux de la trachee) et moins sur les
+    // surfaces lisses. Entre deux paliers, interpolation pour remplir le budget. Decor : decoRatio de
+    // ses triangles. minT : plancher par partie (sans depasser l'original) ; maxT : plafond.
+    public static int[] TargetsByError(List<Part> parts, long budget, int minT, int maxT, double decoRatio, double aggressiveness, out string info)
+    {
+        int n = parts.Count;
+        var traces = new List<int>[n];
+        System.Threading.Tasks.Parallel.For(0, n, i =>
+        {
+            var p = parts[i];
+            if (p.Kind == "d") return;
+            var tr = new List<int>();
+            var s = new QemSimplifier(p.Mesh);
+            s.Simplify(Math.Min(minT, p.Mesh.TriCount), aggressiveness, tr);
+            traces[i] = tr;
+        });
+        var targets = new int[n];
+        long deco = 0;
+        int levels = 1;
+        for (int i = 0; i < n; i++)
+        {
+            if (parts[i].Kind == "d") { targets[i] = Math.Min(parts[i].Mesh.TriCount, Math.Max(minT / 4, (int)(parts[i].Mesh.TriCount * decoRatio))); deco += targets[i]; }
+            else levels = Math.Max(levels, traces[i].Count);
+        }
+        Func<int, int, int> at = (i, k) =>
+        {
+            var tr = traces[i]; int t = tr.Count == 0 ? parts[i].Mesh.TriCount : tr[Math.Min(k, tr.Count - 1)];
+            int lo = Math.Min(minT, parts[i].Mesh.TriCount);
+            return Math.Max(lo, Math.Min(maxT, t));
+        };
+        Func<int, long> total = k => { long s = deco; for (int i = 0; i < n; i++) if (parts[i].Kind != "d") s += at(i, k); return s; };
+        int kk = 0;
+        while (kk < levels - 1 && total(kk) > budget) kk++;
+        // interpolation entre le palier kk - 1 (trop gros) et kk (dans le budget)
+        double f = 1;
+        if (kk > 0)
+        {
+            long a = total(kk - 1), b = total(kk);
+            f = a > b ? Math.Max(0, Math.Min(1, (double)(a - budget) / (a - b))) : 1;
+        }
+        long sum = deco;
+        for (int i = 0; i < n; i++)
+        {
+            if (parts[i].Kind == "d") continue;
+            int hi = kk > 0 ? at(i, kk - 1) : at(i, kk), lo = at(i, kk);
+            targets[i] = (int)Math.Round(hi + (lo - hi) * f);
+            sum += targets[i];
+        }
+        info = string.Format(CultureInfo.InvariantCulture, "palier d'erreur {0} (seuil {1:0.###}), {2} triangles dont decor {3}",
+            kk, 1e-9 * Math.Pow(kk + 3, aggressiveness), sum, deco);
+        return targets;
     }
 }
 
@@ -549,6 +631,7 @@ public class Part
 {
     public string Bone, Side, Label, Kind;
     public Mesh Mesh;
+    public byte[] Ao;      // occlusion ambiante par sommet (MeshFix.cs), facultative
 }
 
 public static class Packer
@@ -561,6 +644,11 @@ public static class Packer
     }
     // withTags : ajoute apres les indices un octet par triangle (element BodyParts3D d'origine)
     public static string Pack(IList<Part> parts, int ax, int ay, int az, int sx, int sy, int sz, bool withTags, out string stats)
+    {
+        return Pack(parts, ax, ay, az, sx, sy, sz, withTags, false, out stats);
+    }
+    // withAo : ajoute a la fin un octet par sommet (occlusion ambiante, Part.Ao ; 255 si absente)
+    public static string Pack(IList<Part> parts, int ax, int ay, int az, int sx, int sy, int sz, bool withTags, bool withAo, out string stats)
     {
         // transformation de repere + boite englobante globale
         double[] min = { double.MaxValue, double.MaxValue, double.MaxValue };
@@ -605,6 +693,9 @@ public static class Packer
         if (withTags)
             foreach (var p in parts)
                 for (int t = 0; t < p.Mesh.TriCount; t++) bw.Write(p.Mesh.Tag.Count > t ? p.Mesh.Tag[t] : (byte)0);
+        if (withAo)
+            foreach (var p in parts)
+                for (int v = 0; v < p.Mesh.VertexCount; v++) bw.Write(p.Ao != null && p.Ao.Length > v ? p.Ao[v] : (byte)255);
         bw.Flush();
         byte[] raw = ms.ToArray();
         var gz = new MemoryStream();
@@ -614,8 +705,8 @@ public static class Packer
             parts.Count, vOff, tris, raw.Length / 1048576.0, packed.Length / 1048576.0, Math.Ceiling(packed.Length / 3.0) * 4 / 1048576.0);
         var js = new StringBuilder();
         js.Append(string.Format(CultureInfo.InvariantCulture,
-            "{{\n  min: [{0:F3}, {1:F3}, {2:F3}],\n  scale: {3:R},\n  vertices: {4},\n  indices: {5},\n  tags: {6},\n  parts: [\n    {7}\n  ],\n  data: '",
-            min[0], min[1], min[2], scale, vOff, iOff, withTags ? "true" : "false", meta));
+            "{{\n  min: [{0:F3}, {1:F3}, {2:F3}],\n  scale: {3:R},\n  vertices: {4},\n  indices: {5},\n  tags: {6},{8}\n  parts: [\n    {7}\n  ],\n  data: '",
+            min[0], min[1], min[2], scale, vOff, iOff, withTags ? "true" : "false", meta, withAo ? "\n  ao: true," : ""));
         js.Append(Convert.ToBase64String(packed));
         js.Append("'\n}");
         return js.ToString();

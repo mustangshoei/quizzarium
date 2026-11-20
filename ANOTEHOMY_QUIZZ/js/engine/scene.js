@@ -166,6 +166,7 @@
     isolate, restoreSkeleton, setPick, setViewBox: setView, addObject, removeObject, renderNow,
     isReady: () => ready,
     isRunning: () => looping && !paused,
+    renderer: () => renderer,                             /* carte d'environnement des organes (tissue.js) */
     hiddenCount: () => hidden.size,
     camera: () => camera,
     renderInfo: () => renderer && renderer.info.render,   /* diagnostic */

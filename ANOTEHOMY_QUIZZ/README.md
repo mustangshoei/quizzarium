@@ -8,7 +8,7 @@ Anotehomy Quizz fait partie du dossier des jeux (voir le [README à la racine](.
 avec les autres jeux les **comptes** (nom + mot de passe) et le serveur facultatif qui permet de jouer à
 plusieurs sur un réseau.
 
-**Version 2.5.0** (numérotation MAJEUR.MINEUR.CORRECTIF : voir « Versions » dans le
+**Version 2.5.1** (numérotation MAJEUR.MINEUR.CORRECTIF : voir « Versions » dans le
 [README à la racine](../README.md#versions), et l'[historique](#versions) plus bas).
 
 ## Lancer le jeu
@@ -52,7 +52,8 @@ js/data/                    données : zones du corps, catalogue des os, découp
                             vocabulaire
 js/data/splanchno/          un modèle 3D par organe détaillé (splanchnologie descriptive, généré)
 js/engine/                  moteur 3D : modèle, scène, caméra, surbrillance, interactions, os isolé, muscles,
-                            vaisseaux et organes (fabrique commune systems.js), organe isolé (splanchno.js)
+                            vaisseaux et organes (fabrique commune systems.js), organe isolé (splanchno.js),
+                            matériau des organes (tissue.js), lancer de rayon accéléré (bvh.js)
 js/game/                    logique de jeu : menu, correction des réponses, configuration, partie, résultats,
                             révision, et un adaptateur par jeu (skeleton-game.js, osteo-game.js, muscle-game.js,
                             vessel-game.js, organ-game.js, splanchno-game.js) ; jeux de vocabulaire, sans 3D
@@ -250,6 +251,17 @@ Reconnaître et localiser les organes sur le corps en 3D (carte « Splanchnologi
   l'autocomplétion.
 - Chaque organe a sa couleur (foie brun, vésicule verte, ventricules cérébraux bleus…) ; la cible est
   **cyan**. Le squelette est affiché en transparence.
+- **Rendu réaliste** (`js/engine/tissue.js`, aussi en splanchnologie descriptive) : surface humide
+  (vernis et reflets d'un petit studio lumineux), creux assombris (occlusion ambiante calculée pour
+  chaque sommet : sillons du cerveau, espaces entre les anses de l'intestin, replis), grain très fin qui
+  apparaît quand on s'approche, bords légèrement translucides. Les organes se voient **des deux côtés** :
+  une cavité ouverte (cœur, cardia, bout d'un conduit) montre sa paroi intérieure au lieu d'un trou.
+- **Modèle d'environ un million de triangles** (8,7 Mo) : les organes gardent presque tout le détail du
+  modèle d'origine (circonvolutions, anses, haustrations et ténias du côlon, anneaux de la trachée), les
+  organes grossiers (rein, rate, glandes…) sont lissés par subdivision, la fenêtre ronde de la face
+  antérieure de l'estomac (un trou du modèle Z-Anatomy) est bouchée. Le lancer de rayon (survol, clic,
+  dégagement automatique) passe par un arbre de volumes englobants (`js/engine/bvh.js`) : il reste
+  instantané malgré ce détail.
 - **Nommage** : un organe caché par d'autres (cristallin dans l'œil, noyaux gris dans le cerveau…) est
   dégagé automatiquement. **Ciblage** : un organe caché est signalé (**Maj + clic** écarte un organe
   gênant).
@@ -259,6 +271,11 @@ Reconnaître et localiser les organes sur le corps en 3D (carte « Splanchnologi
   bulbes du vestibule, les glandes vestibulaires majeures et l'urètre féminin, absents des deux modèles,
   sont **générés** (formes simples placées d'après la symphyse, les rameaux ischio-pubiens et l'orifice du
   vagin). Le bassin osseux reste celui du modèle masculin.
+- La **langue** et les **tonsilles palatines** viennent des organes de référence de l'homme du Human
+  Reference Atlas, bien plus fins que ceux de Z-Anatomy (langue avec ses papilles, tonsilles avec leurs
+  cryptes) ; ils sont recalés sur la bouche du modèle (similitude ajustée sur les dents, l'os hyoïde et
+  les cartilages du larynx). Pour les autres organes, la comparaison des deux modèles a donné l'avantage à
+  Z-Anatomy (intestins, foie, poumons, larynx, trachée, œil…).
 - Le grand omentum, la plèvre, le péritoine et le ligament large de l'utérus ne sont pas repris (ils
   cacheraient tout le reste ; le ligament large est en splanchnologie descriptive).
 
@@ -467,8 +484,9 @@ Un nouveau chapitre se déclare dans `CHAPTERS` (`js/data/games.js`) et sa planc
 
 - Squelette et os détaillés : **BodyParts3D** (DBCLS, CC BY 4.0) ; muscles, vaisseaux et organes :
   **Z-Anatomy** (CC BY-SA 4.0, `js/data/muscle-model.js`, `js/data/vessel-model.js` et
-  `js/data/organ-model.js` sont donc distribués sous la même licence) ; organes féminins et la plupart
-  des organes détaillés : **Human Reference Atlas** (HuBMAP, CC BY 4.0) ; rendu : **Three.js** (MIT) ;
+  `js/data/organ-model.js` sont donc distribués sous la même licence) ; organes féminins, langue,
+  tonsilles palatines et la plupart des organes détaillés : **Human Reference Atlas** (HuBMAP, CC BY 4.0) ;
+  rendu : **Three.js** (MIT) ;
   polices : **Bricolage Grotesque** et **IBM Plex Mono** (OFL). Détails et modifications : `CREDITS.md`.
 - Les planches du menu (`img/chapitre-*.webp`) sont des rendus figés de ces modèles, faits une fois pour
   toutes dans le navigateur ; elles suivent la licence du modèle dont elles viennent (voir `CREDITS.md`).
@@ -485,6 +503,7 @@ Numérotation **MAJEUR.MINEUR.CORRECTIF** commune à tous les jeux (règles : «
 
 | Version | Date | Changements |
 |---|---|---|
+| 2.5.1 | 20/11/2026 | **Organes plus réalistes** (Les organes, et le rendu de la splanchnologie descriptive) : aspect de tissu humide, creux assombris (occlusion ambiante), grain fin de près, organes visibles des deux côtés ; modèle des organes bien plus détaillé (environ un million de triangles au lieu de 340 000, organes grossiers lissés) ; le **trou de l'estomac** (une fenêtre du modèle Z-Anatomy, sur sa face antérieure) est bouché ; langue et tonsilles palatines prises au Human Reference Atlas (HuBMAP), bien plus fines ; urètre féminin, clitoris, bulbes du vestibule, glandes vestibulaires majeures et bout des uretères féminins n'apparaissent plus « à l'envers », pas plus que le canal central de la moelle, la cochlée et le vestibule ; survol, clic et dégagement automatique accélérés (arbre de volumes englobants). |
 | 2.5.0 | 05/11/2026 | Nouveau jeu **Les pathologies** (chapitre « La langue médicale », sans 3D) : 494 pathologies, filtres croisés **difficulté et spécialités** (19), modes Devinette (autres noms et sigles acceptés, anciens termes comptés faux, petits mots ignorés, suggestions par début de mot) et QCM (propositions de même spécialité et même difficulté). Les deux jeux de vocabulaire partagent désormais un même moteur (`js/game/lexique-*.js`). Tous les jeux : plus de temps pour lire la réponse (surtout après une erreur) ; en fin de partie, seules les 3 dernières erreurs sont affichées, les autres derrière un bouton. |
 | 2.4.0 | 05/11/2026 | Nouveau jeu **Les termes médicaux** (chapitre « La langue médicale », sans 3D) : 751 morphèmes (préfixes, radicaux, suffixes) avec sens, origine et exemples ; 26 thèmes ; mode **Devinette** (la définition au centre de l'écran, le joueur écrit le morphème ; suggestions dès 2 caractères, 5 au plus, par ordre alphabétique, sans tenir compte des accents, tirets ni parenthèses) ; mode **QCM** (2 à 6 propositions du même thème, aucune bonne réponse des 3 questions précédentes parmi les propositions). |
 | 2.3.0 | 31/10/2026 | Menu du compte (en haut à gauche) au même style que GéoNohyne Quizz : menu déroulant sous le bouton (titre, joueur, lignes d'action avec pictogramme, note), au lieu d'une fenêtre au centre de l'écran ; l'invité reprend son accent (« Invité »). Les organes : **sexe du corps** au choix (masculin ou féminin) ; 16 organes féminins (ovaires, trompes, utérus, vagin, ligaments, clitoris, bulbes du vestibule, glandes vestibulaires majeures, glandes mammaires, vessie, urètre et uretères féminins), tirés du Human Reference Atlas (HuBMAP, CC BY 4.0) recalé dans le bassin, ou générés. Nouveau jeu **Splanchnologie descriptive** : 20 organes découpés en 335 parties (foie, rein, cœur, poumons, encéphale, œil, utérus et annexes…), un organe affiché seul, au hasard ou choisi ; résultats avec exploration de l'organe. |

@@ -26,7 +26,7 @@ crédits dans `CREDITS.md`, les outils 3D dans `tools/README.md`.
 | `js/data/games.js` | **le catalogue du menu** : `CHAPTERS`, `GROUPS` (une carte pour plusieurs jeux), `GAMES` (`status: 'ready'` ou `'soon'`) |
 | `js/data/*.js` | catalogues : `bones`, `osteology`, `muscles`, `vessels`, `organs`, `splanchnology`, `pathologies`, `morphemes`, `regions` |
 | `js/data/*-model.js`, `js/data/splanchno/*.js` | **modèles 3D générés** (1,5 à 3 Mo chacun) : ne jamais les lire en entier ni les éditer |
-| `js/engine/` | moteur Three.js : `model`, `scene`, `camera`, `highlight`, `input`, `segment` (découpage des os), `systems` (fabrique commune muscles / vaisseaux / organes), `splanchno` (organe isolé) |
+| `js/engine/` | moteur Three.js : `model`, `scene`, `camera`, `highlight`, `input`, `segment` (découpage des os), `systems` (fabrique commune muscles / vaisseaux / organes), `splanchno` (organe isolé), `tissue` (matériau des organes), `bvh` (lancer de rayon accéléré) |
 | `js/game/state.js` | réglages (`settings`), session, `ADAPTERS`, `SCREENS` |
 | `js/game/matcher.js` | correction des saisies (voir plus bas) |
 | `js/game/setup.js`, `play.js`, `results.js` | configuration, partie et résultats **communs** aux jeux 3D |
@@ -79,6 +79,21 @@ compte), la ligne dans `modes` de `../COMMUN/jeux.js`, le README.
 - **Groupes de jeux** (`GROUPS`) : une carte du menu ouvre une fenêtre coupée en deux, une moitié par jeu.
 - **Sexe du corps** (`gSex`) partagé entre « Les organes » et la splanchnologie descriptive.
 - **Délais** : 2,2 s / 3,5 s (remarque) / 6,5 s (erreur) dans les jeux 3D ; 3,5 / 5 / 9 s dans les lexiques.
+- **Rendu des organes** (`js/engine/tissue.js`, organes et splanchnologie) : `tissueMaterial(couleur, ao)`,
+  un MeshPhysicalMaterial partagé par couleur, retouché par `onBeforeCompile` (vernis + carte
+  d'environnement PMREM, occlusion ambiante par sommet, grain en bruit 3D estompé de loin, liseré), visible
+  des deux côtés. Les marques (`MAT.hover/target/ko/ok`) passent aussi en double face avec la palette
+  `organ` (`setMarkPalette`). L'occlusion vient du modèle : attribut `ao` (un octet par sommet, `ao: true`
+  dans l'en-tête du modèle, lu par `decode` / `makeGeometry` de `js/engine/model.js`) ; sans lui, `ao` vaut 1.
+- **Lancer de rayon accéléré** (`js/engine/bvh.js`) : `NS.accelerate(mesh)` remplace `mesh.raycast` par un
+  BVH construit au premier rayon (mêmes résultats que Three.js, ~30 fois plus rapide) ; appliqué aux
+  systèmes (`systems.js`) et à l'organe isolé. Indispensable avec le million de triangles des organes
+  (sinon : survol lent, dégagement automatique jusqu'à 1 s).
+- **Modèle des organes** (`tools/build-organs.ps1`, ~1 million de triangles, 8,7 Mo) : options du
+  catalogue `h: [...]` (organe pris aux organes de référence de l'homme HuBMAP, recalé sur la bouche par
+  ICP, `tools/Register.cs`) et `b: 20` (trous de plus de 20 mm bouchés, `tools/MeshFix.cs`) ; faces
+  remises vers l'extérieur, subdivision des organes grossiers, simplification à erreur commune
+  (`Builder.TargetsByError`), occlusion ambiante. Détails : `tools/README.md`.
 
 ## Pièges
 
@@ -88,9 +103,23 @@ compte), la ligne dans `modes` de `../COMMUN/jeux.js`, le README.
   Grep ou lecture par morceaux.
 - **Licences** : Z-Anatomy est en **CC BY-SA 4.0**, donc les modèles qui en dérivent (`muscle-model.js`,
   `vessel-model.js`, `organ-model.js`, certains organes détaillés) aussi ; BodyParts3D et HuBMAP en CC BY
-  4.0. Toute nouvelle source ou modification va dans `CREDITS.md`.
+  4.0 (organes féminins : ensemble féminin v1.5 ; langue et tonsilles : ensemble masculin v1.10). Toute
+  nouvelle source ou modification va dans `CREDITS.md`.
 - Le modèle Z-Anatomy est masculin : les organes féminins viennent de HuBMAP, recalés dans le bassin, ou
   sont générés (`tools/GlbRead.cs`). Le bassin osseux reste masculin.
+- **HuBMAP (homme) contre Z-Anatomy** : comparés organe par organe en novembre 2026 (rendus côte à côte,
+  modèles d'origine non simplifiés). Z-Anatomy est plus fin presque partout (intestins avec haustrations
+  et ténias, foie, poumons, larynx, trachée annelée, œil, thymus, pancréas, vessie, glandes salivaires) ;
+  HuBMAP ne l'emporte que pour la langue (682 triangles chez Z-Anatomy) et les tonsilles palatines
+  (ellipsoïdes trop petites chez Z-Anatomy). Le foie HuBMAP (`liver_capsule`) est une coque ouverte ;
+  l'estomac et l'œsophage n'existent pas chez HuBMAP. Inutile de refaire la comparaison sans nouvelle
+  version de HuBMAP.
+- **C# : clés `long` dans un `Dictionary` / `HashSet`** : toujours passer `Key64.Instance`
+  (`tools/MeshBuild.cs`). Le hachage par défaut (XOR des deux moitiés) dégénère sur les maillages
+  réguliers : la génération des organes passait de 45 s à 7 min.
+- Les formes générées (`Shape.Tube`, `Shape.Ellipsoid`) avaient leurs faces vers l'intérieur jusqu'à la
+  2.5.1 (invisible avec l'ancien rendu à une face) ; vérifier l'orientation de toute nouvelle forme
+  (volume signé positif : `Orientation.SignedVolume`).
 - Les planches du menu (`img/chapitre-*.webp`) sont des rendus figés du modèle : **aucune 3D dans le menu**.
 
 ## Plans
