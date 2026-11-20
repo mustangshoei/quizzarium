@@ -166,29 +166,16 @@ Règles choisies par Théo le 13/11/2026 (version 2.2.0) :
   `img/CREDITS.md`. Les sources (`src/`, `gen/src/`…) ne sont pas versionnées. Commons limite vite les
   téléchargements (erreur 429) : `f3_dl.py` attend entre deux images ; ne pas lancer deux
   téléchargements en même temps.
+- **Sources de moins de 250 px** (Confucius, Qin Shi Huang, Bashō…) : seul `upload.wikimedia.org` les sert, et
+  il refuse parfois (429, `retry-after: 120`) un fichier précis pendant des jours. Si `f3_dl.py . --petits`
+  échoue, télécharger l'image à la main dans le navigateur et la ranger dans `outils/portraits/src/` sous le
+  nom `<id>.<extension>` (c'est ainsi que Confucius et Sojourner Truth ont été faits, 20/11/2026), puis
+  convertir et vérifier (`essai2.py`).
 - **OpenCV et les accents** : OpenCV n'ouvre pas un chemin contenant « é » (`C:\Users\Théo\…`) ;
   `portrait.py` passe par le nom court Windows (`court()`).
 
 ## Plans
 
-- **Deux portraits encore ronds** : Confucius et Sojourner Truth (les huit autres « petits » sont refaits
-  depuis la 2.3.0). Leurs images `img/personnes/confucius.webp` et `sojourner-truth.webp` sont toujours
-  les anciens médaillons ronds de 256 × 256 : dans les cadres 3:4 (`background-size: contain`), ils
-  s'affichent entiers mais plus petits, avec des marges, et sans double filet.
-  - **Pourquoi** : leurs sources Commons font moins de 250 px (199 et 173 px de large), donc seul
-    `upload.wikimedia.org` les sert, et il répond **429 « Too many requests » (`retry-after: 120`) pour ces
-    deux fichiers seulement** : tentatives du 18/11 (une trentaine, étalées sur plus de 2 h) et du 20/11
-    (attente de 2 min puis reprise ; URL d'origine, avec `?utm_…`, `Special:FilePath`) toutes refusées,
-    alors que d'autres originaux du même hôte (ex. Nabuchodonosor) répondent 200. `thumb.wikimedia.org`
-    répond 400 pour une largeur ≥ celle de l'original. Les sources ne sont donc **pas** sur le disque
-    (`src/confucius.gif`, `src/sojourner-truth.jpg`).
-  - **À refaire** (ne pas insister d'affilée, ça prolonge le blocage) : `python f3_dl.py . --petits` depuis
-    `outils/portraits/`, ou un `curl` des deux URLs de `wiki.json` ; puis conversion (`f4_conv.py
-    ../../img/personnes`, ou `traite()` sur ces deux seuls ; réglage existant : Confucius
-    `coupe [0.45, 0.2, 0.45]`, Sojourner Truth aucun) et revue (`essai2.py`).
-  - **Autre piste** si le blocage dure : choisir une autre image Commons plus grande pour ces deux
-    personnes (`cand.py nom "recherche"`, puis `alt.py id nom numéro`), à valider avec Théo (licence et
-    crédit dans `wiki.json`).
 - Les quatre modes annoncés ; il faudra des citations pour « Qui a dit ça ? ».
 - « Chronologie » : variantes possibles à discuter avec Théo (période en années libres, dynasties ou
   successions de souverains, 6 à 8 blocs, score par ordre relatif).

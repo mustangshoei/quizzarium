@@ -3,7 +3,7 @@
 Jeu consacré à l'histoire (nom provisoire). Il fait partie du dossier des jeux : lancement, comptes
 communs et serveur sont décrits dans le [README à la racine](../README.md).
 
-**Version 2.3.0** (numérotation MAJEUR.MINEUR.CORRECTIF : voir « Versions » dans le
+**Version 2.3.1** (numérotation MAJEUR.MINEUR.CORRECTIF : voir « Versions » dans le
 [README à la racine](../README.md#versions)).
 
 **Modes de jeu** : trois sont jouables, **Qui est venu en premier ?**, **Chronologie** et **Trouver la
@@ -165,6 +165,7 @@ d'où il s'affiche dans le menu « Jeux », sur la page d'accueil et en bas du m
 
 | Version | Date | Changements |
 |---|---|---|
+| 2.3.1 | 20/11/2026 | Les deux derniers portraits encore ronds (Confucius, Sojourner Truth) refaits en rectangles 3:4 : tous les portraits du jeu sont maintenant au même format. |
 | 2.3.0 | 18/11/2026 | **Qui est venu en premier ?** : les difficultés se cumulent (trois tranches distinctes, Facile 1-2, Moyen 3, Expert 4-5, avec « Tout / Aucun » ; un record par combinaison, les anciens records restent valables) ; l'époque n'est plus écrite sous le nom (Antiquité contre époque contemporaine donnait la réponse) ; il reste pays · domaine. Huit portraits encore ronds refaits en rectangles (Qin Shi Huang, Héron d'Alexandrie, Al-Farabi, Bernard de Clairvaux, Maïmonide, Bashō, Sophie Scholl, Stephen Hawking). |
 | 2.2.1 | 17/11/2026 | **Portraits refaits** : rectangles 3:4 à double filet (384 × 512, au lieu de médaillons ronds de 256 px), tirés de sources en 960 px ; images génériques comprises. La planche du chapitre 02 garde ses trois médaillons ronds (`img/medaillons/`). **Qui est venu en premier ?** : cadres en forme de portrait (brun sombre, liseré et lueur dorés au survol), losange « VS » entre les deux, nom sous un filet doré, « Né en ? » dans une pastille en pointillés, consigne en capitales, « Quitter » et score en pastilles. |
 | 2.2.0 | 13/11/2026 | **Qui est venu en premier ?** change de règle et passe dans le chapitre 02 (Les grandes figures). Toujours « qui est né en premier ? » (plus de « en dernier »), sans nombre de questions : la partie continue jusqu'à la première erreur, avec un record par niveau. Après chaque bonne réponse, l'un des deux personnages reste (tiré au hasard, 3 manches de suite au plus) et garde sa date affichée ; l'autre est remplacé, sans revenir avant que tous les autres soient passés. Préphase sur le modèle de « Trouver la date » : période en quatre cartes (« Tout / Aucun ») et difficulté en trois cartes, avec le nombre de personnages. Écran de jeu : les deux cadres en grand au milieu, la consigne fixe dans la barre du haut. Styles du mode dans `css/premier.css` ; l'interrupteur « Tout / Aucun » et les cartes des périodes passent de `date.css` à `style.css` (partagés). |
