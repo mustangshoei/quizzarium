@@ -5,7 +5,7 @@ GéoNohyne Quizz fait partie du dossier des jeux (voir le [README à la racine](
 avec les autres jeux les **comptes** (nom + mot de passe) et le serveur facultatif (`../SERVEUR/serveur.py`,
 Python sans dépendance) qui permet de jouer à plusieurs sur un réseau, avec des classements communs.
 
-**Version 2.3.0** (numérotation MAJEUR.MINEUR.CORRECTIF : voir « Versions » dans le
+**Version 2.4.0** (numérotation MAJEUR.MINEUR.CORRECTIF : voir « Versions » dans le
 [README à la racine](../README.md#versions), et l'[historique](#versions) plus bas).
 
 ## Lancer le jeu
@@ -35,6 +35,8 @@ css/style.css                      toute l'apparence (« Atlas en relief », th�
 css/polices/                       polices Bricolage Grotesque et IBM Plex Mono (licence OFL, fichiers OFL-*.txt)
 img/topo.svg                       fond : courbes de niveau
 js/carte.js                        moteur de cartes (GeoJSON → SVG), sans donnée de pays
+js/grand-chemin.js                 moteur des deux jeux « Le Grand Chemin » (départements, pays), sans donnée
+js/globe.js                        géométrie du globe (projection orthographique, découpage à l'horizon), sans donnée
 js/core.js                         noyau : enregistrement des modules, écran de choix (un panneau par quiz), quiz (ciblage,
                                    nommage, record), mode Apprendre, zoom
 js/menu.js                         LE MENU : chapitres (grandes catégories), leurs cartes, carte des régions en relief
@@ -47,7 +49,7 @@ js/france/                         « La France et sa géographie »
   quiz-departements.js             quiz des départements, carte « Les départements et leurs préfectures » (modèle des autres quiz)
   quiz-prefectures.js              quiz des préfectures, sur la même carte du menu (second sujet de l'écran de choix)
   quiz-fleuves.js                  quiz « Fleuves & Océans »
-  grand-chemin.js                  jeu « Le Grand Chemin » (relier deux départements, avec ou sans étapes)
+  grand-chemin.js                  jeu « Le Grand Chemin » des départements (sa configuration ; moteur : js/grand-chemin.js)
   morpion.js                       jeu « Morpion des Départements » (tic-tac-toe à critères croisés)
   liste.js                         jeu « La Liste des Départements » (citer départements et préfectures)
   codage.js                        jeu « Codage – Encodage » (numéro ↔ nom des départements, chronométré)
@@ -55,6 +57,7 @@ js/france/                         « La France et sa géographie »
 js/monde/                          « Le monde et ses pays »
   quiz-pays.js                     quiz « Les pays du monde »
   quiz-oceans-mers.js              quiz « Les océans et mers »
+  grand-chemin-monde.js            jeu « Le Grand Chemin » des pays (sa configuration ; moteur : js/grand-chemin.js)
 js/apprendre/                      « Apprendre »
   departements.js                  « Apprendre les départements » (modèle des autres modules)
   fleuves-oceans.js                « Apprendre les fleuves et océans de France »
@@ -93,7 +96,7 @@ rouvrant le jeu.
 | Chapitre | Image (et légende) | Cartes (dans l'ordre de la grille) |
 |---|---|---|
 | 01 **La France et sa géographie** | les régions de France, une couleur chacune, Paris (régions, départements métropolitains, d'Outre-Mer) | Les départements et leurs préfectures · Fleuves & Océans · Le Grand Chemin · Morpion des Départements · La Liste des Départements · Codage – Encodage · L'Entonnoir |
-| 02 **Le monde et ses pays** | les pays du monde, une couleur par continent, la France (pays, continents, océans et mers) | Les pays du monde · Les capitales du monde *(à venir)* · Le morpion du monde *(à venir)* · Le Grand Chemin *(à venir)* · Les océans et mers |
+| 02 **Le monde et ses pays** | les pays du monde, une couleur par continent, la France (pays, continents, océans et mers) | Les pays du monde · Les capitales du monde *(à venir)* · Le morpion du monde *(à venir)* · Le Grand Chemin · Les océans et mers |
 | 03 **Apprendre** | la France, ses fleuves et rivières, les grands fleuves et les mers nommés (cartes à explorer, nombre de fiches) | Apprendre les départements · Apprendre les fleuves et océans de France · Apprendre les pays · Apprendre les mers et océans du monde |
 
 Les records et statistiques ne sont pas dans le menu : on les ouvre depuis le menu du compte (« Mes
@@ -298,10 +301,34 @@ hasard ou par régions, Outre-Mer, ordre INSEE, indice, rattrapage). Code : `js/
 
 ## Le monde et ses pays
 
-Deux cartes sont disponibles, **Les pays du monde** et **Les océans et mers** ; les trois autres restent
-grisées. Identifiants prévus dans `js/menu.js` (le module qui utilisera l'un d'eux activera la carte) :
-`{ quiz: 'capitales' }`, `{ jeu: 'morpion-monde' }`, `{ jeu: 'grand-chemin-monde' }`. Les données des fiches
-(capitales, voisins, langues…) sont déjà dans `data/monde/infos-pays.js` pour ces futurs jeux.
+Trois cartes sont disponibles, **Les pays du monde**, **Le Grand Chemin** et **Les océans et mers** ; les deux
+autres restent grisées. Identifiants prévus dans `js/menu.js` (le module qui utilisera l'un d'eux activera la
+carte) : `{ quiz: 'capitales' }`, `{ jeu: 'morpion-monde' }`. Les données des fiches (capitales, voisins,
+langues…) sont déjà dans `data/monde/infos-pays.js` pour ces futurs jeux.
+
+### Le Grand Chemin (pays du monde)
+
+Le même jeu que [Le Grand Chemin](#le-grand-chemin) des départements, avec des pays : mêmes règles (longueur,
+étoiles, détours et étapes, indications Libre / Aide / Pas à pas, « Voir la solution »), même écran. Les deux
+versions partagent un seul moteur (`js/grand-chemin.js`) ; chacune a sa configuration
+(`js/france/grand-chemin.js`, `js/monde/grand-chemin-monde.js`) et ses réglages mémorisés
+(`geonohyne.chemin.*`, `geonohyne.chemin-monde.*`).
+
+- **Frontières** : les frontières terrestres de `data/monde/infos-pays.js`, **territoires d'outre-mer compris** :
+  France–Brésil et France–Suriname (Guyane), France–Pays-Bas (Saint-Martin), Danemark–Canada (île Hans),
+  Espagne–Maroc (Ceuta, Melilla), Royaume-Uni–Espagne (Gibraltar), Royaume-Uni–Chypre (bases). On peut donc
+  passer d'Europe en Amérique du Sud par la Guyane. Les pays sans frontière terrestre (Japon, Australie,
+  Islande…) ne font pas partie du jeu.
+- **Région** (Paramètres) : Monde entier (par défaut), Europe, Afrique, Asie ou Amériques. Seuls les pays de la
+  région comptent (départ, arrivée, chemin parfait, suggestions) ; les autres sont estompés sur la carte. Les
+  continents sont ceux de `infos-pays.js` (Russie en Europe ; Turquie, Caucase et Kazakhstan en Asie ; Égypte
+  en Afrique). Plus grand écart : monde entier 18 sauts (Lesotho – Papouasie-Nouvelle-Guinée), Europe 9,
+  Afrique, Asie et Amériques 10.
+- **Longueur** : 4 à 10 sauts par défaut ; avec des étapes, 20 sauts au plus.
+- **Carte** : le globe par défaut, la carte plate au choix (bouton 🌐) ; silhouette des terres, sans frontières.
+  La vue se cadre sur le départ, l'arrivée et les étapes (R ou ⤢ y reviennent). Les points des micro-États
+  n'apparaissent que lorsqu'ils sont proposés.
+- **Saisie** : le nom du pays ou un autre nom (« Myanmar », « EAU »…), ou son code ISO (« FRA »).
 
 ### Les pays du monde
 
@@ -317,6 +344,16 @@ Sur le modèle du quiz des départements. Code : `js/monde/quiz-pays.js`.
   Océanie ; chaque pays est dans un seul continent (Russie → Europe ; Turquie, Kazakhstan, Caucase → Asie ;
   Égypte → Afrique ; Chypre → Europe).
 - **Indice** (option : rien | continent) : le continent, « Mongolie (Asie) ».
+- **Globe ou carte plate** : on joue par défaut sur un **globe** qu'on fait tourner comme dans Google Earth ;
+  le bouton 🌐 (sous le zoom) passe à la carte plate et inversement, même en pleine partie (le choix est
+  mémorisé). Le globe tourne **sans jamais pencher** : le nord reste en haut ; glisser à gauche ou à droite le
+  fait tourner sur son axe, glisser vers le haut ou le bas montre le nord ou le sud (butée aux pôles). Une
+  rotation libre, comme une boule, a été essayée puis abandonnée : on s'y perd en jouant. Molette : zoom vers le
+  curseur (×16 au plus). **R** (ou ⤢) remet la vue de départ : Europe et Afrique, ou les continents choisis en
+  jouant par continents (sauf pendant une saisie, où la lettre s'écrit). Le globe se tourne tout seul, au plus
+  court, vers le pays demandé en nommage, et vers la bonne réponse après une erreur si elle est cachée. Sur le globe,
+  les pays ont leur vraie taille (le Groenland n'est pas plus grand que l'Afrique) et l'Antarctique est dessiné
+  en gris.
 
 ### Apprendre les pays
 
@@ -346,12 +383,14 @@ reliées (cliquables), pays riverains.
 | Capitales, langues, monnaies | établies à la main (2026) |
 | Voisins, pays riverains, mers voisines | calculés sur les cartes, corrigés à la main (Israël–Syrie, Zambie–Botswana, Danemark–Canada…) |
 
-Projection **Equal Earth** (surfaces respectées), sans l'Antarctique pour la carte des pays. Les fiches se
+Carte plate en projection **Equal Earth** (surfaces respectées), sans l'Antarctique pour la carte des pays ;
+**globe** en projection orthographique (`data/monde/globe-pays.js` : les mêmes pays en longitude et latitude,
+simplifiés à environ 5 km, avec l'Antarctique ; dessiné par `js/globe.js` et `js/core.js`). Les fiches se
 modifient directement dans `data/monde/infos-pays.js` et `infos-mers.js` (une ligne par pays ou par mer).
 Pour régénérer les cartes (nouvelle mer, autre niveau de difficulté…) : modifier les listes au début de
 `outils/construire-monde.js`, ouvrir `outils/construire-monde.html` dans le navigateur, choisir les deux
 fichiers Natural Earth indiqués (dépôt GitHub `nvkelso/natural-earth-vector`, dossier `geojson/`), puis
-télécharger les cartes et les placer dans `data/monde/`.
+télécharger les cartes (dont `globe-pays.js`) et les placer dans `data/monde/`.
 
 ## Le Grand Chemin
 
@@ -725,6 +764,7 @@ page d'accueil.
 
 | Version | Date | Changements |
 |---|---|---|
+| 2.4.0 | 15/11/2026 | **Les pays du monde sur un globe** : par défaut, la partie se joue sur un globe qu'on fait tourner (projection orthographique), sans qu'il puisse pencher (le nord reste en haut) ; zoom à la molette vers le curseur ; bouton 🌐 pour passer à la carte plate et revenir (choix mémorisé, possible en pleine partie) ; **R** remet la vue de départ (sur toutes les cartes). Le globe se tourne tout seul vers le pays demandé (nommage) ou vers la bonne réponse cachée ; par continents, il se cale sur eux. Nouvelle donnée `data/monde/globe-pays.js` (Natural Earth, avec l'Antarctique), fabriquée par `outils/construire-monde.html` en même temps que les cartes plates (inchangées). **Le Grand Chemin du monde** : relier deux pays de voisin en voisin, avec les mêmes règles que celui des départements (longueur, détours, Libre / Aide / Pas à pas), frontières terrestres des territoires d'outre-mer comprises (France–Brésil par la Guyane…), réglage **Région** (monde entier, Europe, Afrique, Asie, Amériques), sur le globe ou la carte plate. Les deux Grand Chemin partagent désormais un seul moteur (`js/grand-chemin.js`) ; celui des départements ne change pas. |
 | 2.3.0 | 12/11/2026 | **Écran de choix des quiz revu** : un seul panneau, avec en haut un sélecteur **« Sujet du jeu » (Départements \| Préfectures)** au lieu de deux colonnes côte à côte (dernier sujet mémorisé ; façon de jouer et mode record communs aux deux) ; une grille dont les cases s'alignent en haut et en bas (façon de jouer \| mode de tirage, nombre de questions \| options) ; « Au hasard » et « Par régions » en grandes tuiles ; options en tuiles d'une ligne ; en mode record, les records à côté de la façon de jouer et le périmètre sur toute la largeur ; « Lancer la partie → » centré. Couleur **orange ambré** et lumières sur cet écran (le reste du jeu garde le corail). **Ordre INSEE (en indice)** : une seule option à trois choix, rien \| code \| ordre + code, au lieu de « Ordre INSEE » et « Indice » séparés (l'indice « département » des préfectures est retiré) ; pour les pays, Indice : rien \| continent (contrat : `indices` d'une catégorie, avec `ordonne`, `nomIndice`, `aideIndice` ; l'ancienne forme `indice` reste acceptée). **La Liste des Départements : mode Hardcore** (Non, 3, 5, 10 ou Illimité) : ni liste ni carte, seulement les noms cités et les répétitions ; éliminé à la limite des répétitions. Sur téléphone, l'écran défile au lieu de replier une colonne. |
 | 2.2.0 | 02/11/2026 | **Les préfectures** : la colonne « Préfectures » de « Les départements et leurs préfectures » devient un quiz, avec les mêmes réglages que les départements (ciblage ou nommage, record, au hasard ou par régions, Outre-Mer, ordre INSEE, rattrapage). Un point sur chaque préfecture (mairie, d'après geo.api.gouv.fr) ; en nommage, fautes de frappe légères tolérées (comme Anotehomy Quizz), article facultatif, « St » = « Saint », « Cergy » pour Pontoise ; indice « département (numéro) » sous la question. Records et statistiques à part. Sur l'écran de choix, chaque colonne a ses propres réglages ; sur téléphone, l'une est dépliée, l'autre réduite à son titre (« Afficher »). Carte du menu : « Placer et deviner les départements français et leurs préfectures sur une carte. » Mode record : « Vous » au lieu de votre nom quand vous êtes le meilleur de tous les joueurs. La Liste des Départements sur téléphone : l'écran des options (où « Lancer la partie » était caché) défile, et la légende de la carte ne cache plus l'Outre-Mer. |
 | 2.1.0 | 29/10/2026 | Le Écran de choix des quiz refait, sans défilement : interrupteur « Mode record » mémorisé, cartes Ciblage / Nommage, nombre de questions avec − / + et raccourcis, mini-carte cliquable des régions (et du périmètre du record), options en interrupteurs ; pour les départements, colonne « Préfectures » en structure seulement. Le Grand Chemin : bouton « Paramètres » (panneau qui s'ouvre vers le haut) avec la longueur du chemin (de 3 à 12 sauts, jusqu'à 15 avec des détours), les détours (1 à 5 étapes imposées, dans l'ordre, sans repasser par un même département ; 2 à 5 sauts entre deux arrêts, tirés au hasard) et les indications (Libre, Aide, Pas à pas : dans l'ordre, sans détour, sinon le département est en rouge) ; textes justifiés. Menu : « Les Départements » devient « Les départements et leurs préfectures » (fusion avec « Les Préfectures », titre seulement), « Les Régions » retirée, chapitre « Records et statistiques » retiré (les statistiques restent dans le menu du compte). |

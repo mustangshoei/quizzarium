@@ -6,7 +6,8 @@
    pour leur pays (un clic sur le Groenland = le Danemark). Les micro-États, signalés par un
    point facile à cliquer, sont hors du tirage « par nombre » sauf si la case est cochée
    (comme l'Outre-Mer pour les départements) ; le mode « par continents » les inclut.
-   Données : data/monde/carte-pays.js et data/monde/infos-pays.js (à charger avant).
+   Le joueur choisit le globe (par défaut) ou la carte plate (bouton 🌐 de la carte).
+   Données : data/monde/carte-pays.js, data/monde/globe-pays.js et data/monde/infos-pays.js (à charger avant).
    Sa place dans le menu : { quiz: 'pays' } dans js/menu.js.
    ========================================================================== */
 (function () {
@@ -37,6 +38,7 @@
     question: 'Où se trouve…',
 
     carte: 'monde-pays',
+    globe: 'monde-pays-globe',        // data/monde/globe-pays.js : on joue sur le globe (par défaut) ou la carte plate
 
     unite: 'pays',
     // Indice : rien, ou le continent à côté du nom

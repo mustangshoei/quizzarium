@@ -17,6 +17,7 @@
        elements: [ { code, nom, d, cx, cy } ] }
        d       tracé SVG de la zone (attribut "d" d'un <path>)
        cx, cy  point central de la zone
+   Une carte « globe » (globe: true, en degrés, sans largeur ni hauteur) est décrite dans js/globe.js.
    ========================================================================== */
 (function (root) {
   'use strict';
@@ -153,7 +154,7 @@
   }
 
   function valide(c) {
-    return !!c && Array.isArray(c.elements) && c.elements.length > 0 && c.largeur > 0 && c.hauteur > 0;
+    return !!c && Array.isArray(c.elements) && c.elements.length > 0 && (c.globe === true || (c.largeur > 0 && c.hauteur > 0));
   }
 
   function enregistrer(id, carte) {

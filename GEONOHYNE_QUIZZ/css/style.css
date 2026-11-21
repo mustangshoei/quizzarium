@@ -1352,6 +1352,16 @@ body[data-reperes="1"] .legende-reperes { display: inline-flex !important; }
 /* Décor nommé (pays voisins, Palestine…) : son nom s'affiche au survol en mode Apprendre */
 .decor-nomme { pointer-events: auto; cursor: default; }
 
+/* Globe (js/core.js, js/globe.js) : océan cerclé d'une lueur, méridiens et parallèles discrets, ombre qui donne
+   le volume (dégradé #globe-ombre) ; les zones gardent les couleurs et les états de la carte plate */
+#map[data-globe="1"] { filter: drop-shadow(0 0 18px rgba(94, 200, 220, .16)) drop-shadow(0 18px 26px rgba(0, 0, 0, .5)); }
+.globe-ocean { fill: #0b2f3c; stroke: rgba(130, 214, 228, .45); stroke-width: 1.2; }
+.globe-graticule { fill: none; stroke: rgba(167, 196, 192, .13); stroke-width: .8; pointer-events: none; }
+.globe-ombre { fill: url(#globe-ombre); pointer-events: none; }
+.zoom [data-zoom="globe"] { display: none; }
+body[data-globe="globe"] .zoom [data-zoom="globe"], body[data-globe="plat"] .zoom [data-zoom="globe"] { display: grid; }
+.zoom [data-zoom="globe"][aria-pressed="true"] { border-color: rgba(94, 234, 212, .55); color: var(--mint); }
+
 /* Mers du monde : un bleu par type, des limites sombres entre les mers ; les terres en fond */
 #map[data-carte="monde-mers"] .zone { stroke: var(--bg); stroke-width: .8; }
 #map[data-carte="monde-mers"] .zone[data-state="idle"][data-type="ocean"]   { fill: #0f3550; }
@@ -1460,7 +1470,7 @@ body[data-reperes="1"] .legende-reperes { display: inline-flex !important; }
 .chemin-numeros text { fill: var(--violet); font-family: var(--mono); font-weight: 600; text-anchor: middle; dominant-baseline: central; }
 
 /* Paramètres : bouton au-dessus de « Voir la solution » et « Nouvelle partie » ; le panneau s'ouvre vers le
-   haut (sa hauteur maximale est réglée à l'ouverture par js/france/grand-chemin.js) */
+   haut (sa hauteur maximale est réglée à l'ouverture par js/grand-chemin.js) */
 .chemin-reglages { position: relative; flex: none; }
 .chemin-reglages__btn { display: flex; align-items: center; gap: .55rem; width: 100%; padding: .55rem .8rem; text-align: left; }
 .chemin-reglages__btn svg { flex: none; width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
@@ -1551,6 +1561,10 @@ body[data-reperes="1"] .legende-reperes { display: inline-flex !important; }
    et rien n'est cliquable ; seuls les départements révélés ont un contour */
 #screen-chemin .zone { pointer-events: none; cursor: default; }
 #screen-chemin .zone[data-state="idle"] { fill: var(--terre); stroke: var(--terre); }
+#screen-chemin .zone.hors-quiz { opacity: .45; }              /* monde : pays hors de la région choisie */
+/* Monde : les points des micro-États n'apparaissent que révélés (sinon ils serviraient d'indices) */
+#screen-chemin .zone--point[data-state="idle"] { display: none; }
+#screen-chemin .chemin-region { flex-wrap: wrap; }
 
 /* Carte : états des départements */
 .zone[data-state="depart"]   { fill: var(--cyan); }

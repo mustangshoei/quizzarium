@@ -104,7 +104,7 @@
       <span><i class="dot dot--sel"></i>sélectionné</span>
       <span><i class="dot dot--voisin"></i><span id="learn-legende-liens">frontalier</span></span>
       <span class="legende-points"><i class="dot dot--point"></i>point : petite zone, cliquez dessus</span>
-      <span>Molette : zoom · Glisser : déplacer</span>
+      <span>Molette : zoom · Glisser : déplacer · R : recentrer</span>
     </div>
   </div>
   <!-- La carte (#map-wrap) est déplacée ici par js/core.js -->
@@ -123,7 +123,7 @@
 
     <div class="target">
       <p id="chemin-consigne" class="eyebrow">Reliez en passant de voisin en voisin</p>
-      <!-- Départ → étapes éventuelles → arrivée (rempli par js/france/grand-chemin.js) -->
+      <!-- Départ → étapes éventuelles → arrivée (rempli par js/grand-chemin.js, moteur des deux Grand Chemin) -->
       <p id="chemin-trajet" class="chemin-trajet"></p>
     </div>
 
@@ -146,6 +146,12 @@
       <div id="chemin-reglages" class="chemin-reglages__panneau" role="group" aria-labelledby="chemin-reglages-titre" hidden>
         <p id="chemin-reglages-titre" class="chemin-reglages__titre">Paramètres</p>
 
+        <!-- Région : seulement pour une version qui en propose (le monde), js/grand-chemin.js -->
+        <div id="chemin-region-bloc" class="chemin-reglage" hidden>
+          <span class="chemin-reglage__nom">Région</span>
+          <div id="chemin-region" class="mode-switch chemin-choix chemin-mode chemin-region" role="group" aria-label="Région"></div>
+        </div>
+
         <div class="chemin-reglage">
           <span class="chemin-reglage__nom">Longueur du chemin</span>
           <div class="chemin-longueur">
@@ -158,7 +164,7 @@
 
         <label class="checkbox-row chemin-reglage">
           <input id="chemin-detours" type="checkbox">
-          <span><b>Détours</b> : passer par des étapes imposées, dans l'ordre, sans repasser par un même département</span>
+          <span id="chemin-detours-texte"><b>Détours</b> : passer par des étapes imposées, dans l'ordre, sans repasser par un même département</span>
         </label>
         <div id="chemin-etapes" class="mode-switch chemin-choix chemin-etapes" role="group" aria-label="Nombre d'étapes">
           <button type="button" class="mode-btn" data-etapes="1" aria-pressed="false">1</button>
@@ -915,7 +921,7 @@
       <span class="legende-points"><i class="dot dot--point"></i>point : petite zone, cliquez dessus</span>
       <!-- Points des zones (ex. les préfectures) : nom donné par la catégorie (nomPoints), js/core.js -->
       <span class="legende-reperes"><i class="dot dot--repere"></i><span id="legende-reperes">point</span></span>
-      <span>Molette : zoom · Glisser : déplacer</span>
+      <span>Molette : zoom · Glisser : déplacer · R : recentrer</span>
     </div>
   </div>
 
@@ -930,7 +936,9 @@
     <div class="zoom">
       <button type="button" data-zoom="in" aria-label="Zoomer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg></button>
       <button type="button" data-zoom="out" aria-label="Dézoomer"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg></button>
-      <button type="button" data-zoom="reset" aria-label="Recentrer la carte"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <button type="button" data-zoom="reset" aria-label="Recentrer la carte (R)" title="Recentrer (R)"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg></button>
+      <!-- Globe ou carte plate : seulement pour une carte qui existe aussi en globe (def.globe), js/core.js -->
+      <button type="button" data-zoom="globe" aria-label="Passer à la carte plate" aria-pressed="true"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c-2.6 2.4-3.8 5.2-3.8 8.5s1.2 6.1 3.8 8.5M12 3.5c2.6 2.4 3.8 5.2 3.8 8.5s-1.2 6.1-3.8 8.5"/></svg></button>
     </div>
     <!-- Facteur de zoom : js/core.js -->
     <p id="carte-zoom" class="carte-zoom" aria-hidden="true">Zoom ×1,0</p>
@@ -1003,7 +1011,9 @@
 
 <!-- 1. Moteur de cartes, noyau et profils (dans cet ordre) -->
 <script src="js/carte.js"></script>
+<script src="js/globe.js"></script>
 <script src="js/core.js"></script>
+<script src="js/grand-chemin.js"></script>   <!-- moteur des deux « Grand Chemin » (départements, pays) -->
 <script src="js/profils.js"></script>
 
 <!-- 2. Cartes et informations : une ligne par fichier de data/ -->
@@ -1013,6 +1023,7 @@
 <script src="data/france/carte-hydrographie.js"></script>
 <script src="data/france/infos-hydrographie.js"></script>
 <script src="data/monde/carte-pays.js"></script>
+<script src="data/monde/globe-pays.js"></script>
 <script src="data/monde/infos-pays.js"></script>
 <script src="data/monde/carte-mers.js"></script>
 <script src="data/monde/infos-mers.js"></script>
@@ -1030,6 +1041,7 @@
 <!-- 4. « Le monde et ses pays » : quiz et jeux -->
 <script src="js/monde/quiz-pays.js"></script>
 <script src="js/monde/quiz-oceans-mers.js"></script>
+<script src="js/monde/grand-chemin-monde.js"></script>
 
 <!-- 5. « Apprendre » : modules d'exploration -->
 <script src="js/apprendre/departements.js"></script>

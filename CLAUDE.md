@@ -28,7 +28,7 @@ n'est chargé depuis Internet (polices comprises).
 
 | Jeu | Dossier | id | Version | État | Code |
 |---|---|---|---|---|---|
-| 🌍 GéoNohyne Quizz | `GEONOHYNE_QUIZZ/` | `geonohyne` | 2.2.0 | ouvert, le plus complet | **modèle de référence** (identifiants en français) |
+| 🌍 GéoNohyne Quizz | `GEONOHYNE_QUIZZ/` | `geonohyne` | 2.4.0 | ouvert, le plus complet | **modèle de référence** (identifiants en français) |
 | 🦴 Anotehomy Quizz | `ANOTEHOMY_QUIZZ/` | `anotehomy` | 2.5.1 | ouvert | **modèle de référence** (identifiants en anglais, 3D) |
 | 📜 Histehory Quizz | `HISTEHORY_QUIZZ/` | `histehory` | 2.3.1 | ouvert, 3 modes sur 7 | menu « atlas » comme les autres (identifiants en français) |
 | 🌿 Natehure Quizz | `NATEHURE_QUIZZ/` | `natehure` | 0.1.0 | fermé (`bloque`), menu seul | copie de la structure d'Anotehomy |
@@ -183,7 +183,7 @@ IGNORED_BY_CLAUDE/  notes de Théo (ignoré par git et par le serveur)
 Ce qui est annoncé dans les menus ou attendu. Avant de commencer l'un de ces points, vérifie avec Théo
 qu'il est toujours d'actualité et comment il le voit.
 
-- **GéoNohyne** : Les capitales du monde, Le morpion du monde, Le Grand Chemin du monde (id déjà prévus
+- **GéoNohyne** : Les capitales du monde, Le morpion du monde (id déjà prévus
   dans `js/menu.js` et `COMMUN/jeux.js`, données déjà dans `data/monde/infos-pays.js`).
 - **Anotehomy** : Les nerfs ; le module « Le corps humain » (chapitre « Apprendre la Vie », exploration
   libre) ; pas encore de classements publics.

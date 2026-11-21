@@ -10,7 +10,7 @@ connexion Internet). Chaque jeu fonctionne **seul et indépendamment** des autre
 
 | Jeu | Version | Dossier | Pour apprendre | Documentation |
 |---|---|---|---|---|
-| 🌍 **GéoNohyne Quizz** | 2.2.0 | `GEONOHYNE_QUIZZ/` | la géographie : départements et préfectures, fleuves, pays, mers du monde (quiz, jeux, mode Apprendre) | [GEONOHYNE_QUIZZ/README.md](GEONOHYNE_QUIZZ/README.md) |
+| 🌍 **GéoNohyne Quizz** | 2.4.0 | `GEONOHYNE_QUIZZ/` | la géographie : départements et préfectures, fleuves, pays, mers du monde (quiz, jeux, mode Apprendre) | [GEONOHYNE_QUIZZ/README.md](GEONOHYNE_QUIZZ/README.md) |
 | 🦴 **Anotehomy Quizz** | 2.5.1 | `ANOTEHOMY_QUIZZ/` | l'anatomie humaine en 3D : os, ostéologie descriptive, muscles, vaisseaux sanguins, organes (corps masculin ou féminin), splanchnologie descriptive (nomenclature TA2) ; la langue médicale : pathologies, termes médicaux | [ANOTEHOMY_QUIZZ/README.md](ANOTEHOMY_QUIZZ/README.md) |
 | 📜 **Histehory Quizz** | 2.3.1 | `HISTEHORY_QUIZZ/` | l'histoire : dates, frises, personnages (trois modes jouables, « Qui est venu en premier ? », « Chronologie » et « Trouver la date », quatre autres annoncés) | [HISTEHORY_QUIZZ/README.md](HISTEHORY_QUIZZ/README.md) |
 | 🌿 **Natehure Quizz** | 0.1.0 | `NATEHURE_QUIZZ/` | la nature, les végétaux et l'agriculture (en préparation : menu et comptes seulement) — **fermé** : sa tuile reste affichée mais n'est plus cliquable | [NATEHURE_QUIZZ/README.md](NATEHURE_QUIZZ/README.md) |

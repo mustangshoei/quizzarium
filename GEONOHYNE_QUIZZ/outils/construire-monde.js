@@ -232,6 +232,8 @@
   const TOLERANCE = 0.22;                                  // simplification, en unités de la carte (≈ 7,5 km)
   const AIRE_MINI = 0.04;                                  // îlots plus petits (unités², ≈ 50 km²) supprimés
   const ZOOM_MAX = 24;                                     // zoom maximal dans le jeu (14 par défaut : carte de France)
+  const TOLERANCE_GLOBE = 0.05;                            // simplification du globe, en degrés (≈ 5 km)
+  const ZOOM_MAX_GLOBE = 16;                               // zoom maximal du globe (1 = le globe entier)
 
   function equalEarth(lon, lat) {
     const t = Math.asin(M * Math.sin(lat * Math.PI / 180)), t2 = t * t, t6 = t2 * t2 * t2;
@@ -338,11 +340,20 @@
     return pts.filter((_, i) => garde[i]);
   }
 
-  // Anneau projeté, simplifié, arrondi au dixième. fixes : indices à conserver (jonctions entre pays) ;
+  // Deux façons de simplifier : PLAT (carte projetée, unités de la carte, arrondi au dixième) et GLOBE
+  // (longitude et latitude en degrés, arrondies au centième, projetées par le jeu à chaque rotation).
+  // aire : aire d'un anneau simplifié en unités² de la carte plate (même seuil AIRE_MINI dans les deux cas,
+  // donc les mêmes îlots sont gardés).
+  const PLAT = { projeter, tolerance: TOLERANCE, arrondi, aire: (r) => aire(r) };
+  const GLOBE = { projeter: (lon, lat) => [lon, lat], tolerance: TOLERANCE_GLOBE, arrondi: (v) => Math.round(v * 100) / 100,
+    aire: (r) => aire(r.map((c) => projeter(c[0], c[1]))) };
+
+  // Anneau projeté, simplifié, arrondi. fixes : indices à conserver (jonctions entre pays) ;
   // les morceaux entre deux points fixes, communs à deux pays, sont donc simplifiés à l'identique.
-  function simplifier(anneau, fixes, cles) {
+  function simplifier(anneau, fixes, cles, mode) {
+    const m = mode || PLAT;
     const n = anneau.length;
-    const P = anneau.map(([lon, lat]) => projeter(lon, lat));
+    const P = anneau.map(([lon, lat]) => m.projeter(lon, lat));
     let f = fixes.slice();
     if (f.length < 2) {
       // Pas de jonction (île, enclave entière) : ancres choisies d'après les coordonnées seules,
@@ -362,14 +373,14 @@
       for (let k = 0; k < f.length; k++) {
         const i = f[k], j = f[(k + 1) % f.length], chaine = [];
         for (let t = i; ; t = (t + 1) % n) { chaine.push(P[t]); if (t === j) break; }
-        const s = douglasPeucker(chaine, TOLERANCE);
+        const s = douglasPeucker(chaine, m.tolerance);
         s.pop();
         res.push(...s);
       }
     }
     const out = [];
     res.forEach(([x, y]) => {
-      const p = [arrondi(x), arrondi(y)], q = out[out.length - 1];
+      const p = [m.arrondi(x), m.arrondi(y)], q = out[out.length - 1];
       if (!q || q[0] !== p[0] || q[1] !== p[1]) out.push(p);
     });
     if (out.length > 1 && out[0][0] === out[out.length - 1][0] && out[0][1] === out[out.length - 1][1]) out.pop();
@@ -379,13 +390,14 @@
   const chemin = (anneaux) => anneaux.map((r) => 'M' + r.map((p) => p[0] + ' ' + p[1]).join('L') + 'Z').join('');
 
   // Polygones simplifiés : [{ ext, trous }] ; les îlots trop petits disparaissent, sauf le plus grand
-  function simplifierPolygones(polys, fixesDe) {
+  function simplifierPolygones(polys, fixesDe, mode) {
+    const m = mode || PLAT;
     const res = [];
     polys.forEach((poly) => {
-      const ext = simplifier(poly[0], ...fixesDe(poly[0]));
+      const ext = simplifier(poly[0], ...fixesDe(poly[0]), m);
       if (!ext) return;
-      const trous = poly.slice(1).map((r) => simplifier(r, ...fixesDe(r))).filter((r) => r && aire(r) >= AIRE_MINI);
-      res.push({ ext, trous, aire: aire(ext) });
+      const trous = poly.slice(1).map((r) => simplifier(r, ...fixesDe(r), m)).filter((r) => r && m.aire(r) >= AIRE_MINI);
+      res.push({ ext, trous, aire: m.aire(ext) });
     });
     if (!res.length) return res;
     const plusGrand = res.reduce((a, b) => (b.aire > a.aire ? b : a));
@@ -465,12 +477,16 @@
     feats.forEach((f, fi) => {
       const z = zoneDe[fi];
       if (!z) { if (!IGNORES.includes(f.p.ADM0_A3)) rapport.ignores.push(f.p.ADM0_A3 + ' ' + f.p.NAME_FR); return; }
-      if (!zones.has(z)) zones.set(z, { polys: [], propres: [], brut: [], label: null, nom: null });
+      if (!zones.has(z)) zones.set(z, { polys: [], propres: [], brut: [], label: null, nom: null, globe: [], globePropres: [] });
       const zone = zones.get(z);
       const s = simplifierPolygones(f.polys, fixesDe);
+      const sg = simplifierPolygones(f.polys, fixesDe, GLOBE);
       zone.polys.push(...s);
+      zone.globe.push(...sg);
       if (propre[fi] || z[0] === '#') {
         zone.propres.push(...s);
+        zone.globePropres.push(...sg);
+        zone.labelDegres = [f.p.LABEL_X, f.p.LABEL_Y];
         zone.brut.push(...f.polys);
         zone.nom = NOMS[z] || TERRITOIRES_GRIS[z.slice(1)] || f.p.NAME_FR;
         zone.label = projeter(f.p.LABEL_X, f.p.LABEL_Y).map(arrondi);
@@ -531,9 +547,11 @@
         if ((a[1] - LIMITE_SAHARA) * (b[1] - LIMITE_SAHARA) < 0) xs.push(a[0] + (LIMITE_SAHARA - a[1]) * (b[0] - a[0]) / (b[1] - a[1]));
       }
     }));
+    let limiteSahara = null;
     if (xs.length >= 2) {
       const p = projeter(Math.min(...xs), LIMITE_SAHARA).map(arrondi), q = projeter(Math.max(...xs), LIMITE_SAHARA).map(arrondi);
       decor.push({ d: 'M' + p.join(' ') + 'L' + q.join(' '), classe: 'limite-disputee', dessus: true });
+      limiteSahara = [Math.min(...xs), Math.max(...xs)].map(GLOBE.arrondi);
     }
 
     // Trous des pays (lacs, mais aussi enclaves, que leur pays recouvre) : sur la carte des mers, ils
@@ -554,13 +572,74 @@
         decor,
         elements
       },
+      globe: construireGlobe(zones, elements, limiteSahara, feats.filter((f) => f.p.ADM0_A3 === 'ATA')),
       zones,
       antarctique: feats.filter((f) => f.p.ADM0_A3 === 'ATA')
     };
   }
 
+  /* ------------------------------------------------------------------ */
+  /* Globe des pays                                                      */
+  /* ------------------------------------------------------------------ */
+  // Mêmes pays, mêmes points, mêmes décors que la carte plate, mais en degrés : d = « M lon lat L lon lat … Z »,
+  // (cx, cy) = (longitude, latitude) du point d'étiquette, cadre = [lon0, lat0, lon1, lat1] (lon1 peut dépasser 180
+  // pour un pays à cheval sur l'antiméridien, ex. les Fidji). Le jeu (js/globe.js) projette tout à chaque rotation.
+  // Les anneaux extérieurs tournent dans le sens direct (longitude vers l'est, latitude vers le nord) et les trous
+  // dans l'autre : le jeu s'en sert pour suivre l'horizon quand un pays passe derrière le globe.
+  function construireGlobe(zones, elementsPlats, limiteSahara, antarctique) {
+    const orienter = (r, direct) => {
+      let a = 0;
+      for (let i = 0, n = r.length; i < n; i++) { const p = r[i], q = r[(i + 1) % n]; a += p[0] * q[1] - q[0] * p[1]; }
+      return (a > 0) === direct ? r : r.slice().reverse();
+    };
+    const anneaux = (polys) => polys.flatMap((p) => [orienter(p.ext, true), ...p.trous.map((t) => orienter(t, false))]);
+    const plats = new Map(elementsPlats.map((e) => [e.code, e]));
+    const decor = [];
+    const elements = [];
+    zones.forEach((zone, code) => {
+      if (code[0] === '#') {
+        decor.push({ nom: zone.nom, d: chemin(anneaux(zone.globe)), classe: 'territoire' });
+        return;
+      }
+      const plat = plats.get(code);
+      if (!plat) return;
+      const [cx, cy] = zone.labelDegres.map(GLOBE.arrondi);
+      const el = { code, nom: plat.nom, d: chemin(anneaux(zone.globe)), cx, cy, type: 'pays',
+        cadre: CADRES[code] ? CADRES[code].slice() : zone.globePropres.length ? cadreGlobe(zone.globePropres) : [cx, cy, cx, cy] };
+      if (plat.point) el.point = true;
+      elements.push(el);
+    });
+    elements.sort((a, b) => (!!a.point - !!b.point) || (a.code < b.code ? -1 : 1));
+    if (limiteSahara) {
+      decor.push({ d: 'M' + limiteSahara[0] + ' ' + GLOBE.arrondi(LIMITE_SAHARA) + 'L' + limiteSahara[1] + ' ' + GLOBE.arrondi(LIMITE_SAHARA),
+        classe: 'limite-disputee', dessus: true, ligne: true });
+    }
+    // Antarctique : terre grise, non cliquable (absente de la carte plate des pays)
+    const sansFixes = (r) => [[], r.map((c) => c[0] + ',' + c[1])];
+    const ata = simplifierPolygones(antarctique.flatMap((f) => polygones(f.geometry)), sansFixes, GLOBE);
+    decor.unshift({ d: chemin(anneaux(ata)), classe: 'terre', nom: 'Antarctique' });
+    return {
+      version: 2,
+      globe: true,
+      nom: 'Monde : les pays (globe)',
+      credit: 'Contours : Natural Earth (domaine public), frontières selon le point de vue de la France. Globe en projection orthographique.',
+      zoomMax: ZOOM_MAX_GLOBE,
+      decor,
+      elements
+    };
+  }
+
+  // Cadre d'un pays sur le globe, en degrés : comme cadreGroupe ; à cheval sur l'antiméridien, les longitudes
+  // négatives passent au-delà de 180
+  function cadreGlobe(polys) {
+    const b = cadreGroupe(polys, 5.4);
+    if (b[2] - b[0] <= 180) return b;
+    const lons = polys.flatMap((p) => p.ext.map((c) => (c[0] < 0 ? c[0] + 360 : c[0])));
+    return [Math.min(...lons), b[1], Math.max(...lons), b[3]].map(GLOBE.arrondi);
+  }
+
   // Cadre d'un pays : sa plus grande île et les terres proches (à moins de ~500 km), pas les îles lointaines
-  function cadreGroupe(polys) {
+  function cadreGroupe(polys, distanceMax) {
     const grands = polys.filter((p) => p.aire >= 0.5);
     const liste = (grands.length ? grands : polys).map((p) => boite(p.ext));
     const aires = (grands.length ? grands : polys).map((p) => p.aire);
@@ -571,7 +650,7 @@
     for (let change = true; change;) {
       change = false;
       liste.forEach((c, i) => {
-        if (pris.has(i) || dist(b, c) > 15) return;
+        if (pris.has(i) || dist(b, c) > (distanceMax || 15)) return;
         pris.add(i); change = true;
         b = [Math.min(b[0], c[0]), Math.min(b[1], c[1]), Math.max(b[2], c[2]), Math.max(b[3], c[3])];
       });
@@ -723,7 +802,7 @@
       mers: carteMers.elements.length,
       mersParNiveau: [1, 2, 3, 4].map((n) => carteMers.elements.filter((e) => e.niveau === n).length)
     };
-    return { cartePays: pays.carte, carteMers, rapport };
+    return { cartePays: pays.carte, carteMers, globePays: pays.globe, rapport };
   }
 
   // Texte complet d'un fichier data/monde/carte-xxx.js

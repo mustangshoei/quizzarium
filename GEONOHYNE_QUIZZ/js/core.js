@@ -5,7 +5,7 @@
      - l'enregistrement des modules (quiz, jeux à part, modules « Apprendre »)
      - le choix de la partie, le déroulement du quiz, le score, le chrono
      - le mode « Apprendre » : carte cliquable, fiche de la zone, recherche
-     - la carte SVG interactive (zoom, déplacement, clic)
+     - la carte SVG interactive (zoom, déplacement, clic), plate ou en globe (géométrie : js/globe.js)
 
    MENU : décrit et affiché par js/menu.js (chapitres, c'est-à-dire grandes catégories, et
    leurs cartes). Le menu interroge le noyau avec GeoNohyne.trouver(type, id) et ouvre un
@@ -73,6 +73,10 @@
      nomTout         nom du périmètre complet en mode record (« France entière », « Monde complet »…) ;
                      les autres périmètres de record sont les groupes, un par un
      fond            { carte, exclure } : carte de décor non cliquable (voir le contrat « Apprendre »)
+     globe           (facultatif) identifiant d'une carte globe de data/ (ex. 'monde-pays-globe', voir js/globe.js) :
+                     la partie se joue alors sur un globe qu'on fait tourner, ou sur la carte plate, au choix du joueur
+                     (bouton 🌐 de la carte, mémorisé : geonohyne.carte.globe ; globe par défaut ; bascule possible en
+                     pleine partie). Les mini-cartes de l'écran de choix restent plates
 
    CONTRAT D'UN MODULE « APPRENDRE » (GeoNohyne.registerApprentissage) — voir js/apprendre/departements.js
      id, titre, carte    obligatoires (carte du menu : { apprendre: 'id' } dans js/menu.js)
@@ -107,9 +111,13 @@
      icone, description   textes de la carte du menu
      ecran           id de la <section> du jeu dans index.html (la carte #map-wrap y est déplacée)
      ouvrir(api)     appelé à chaque ouverture ; api = { carte, zones, etat, reinitialiserVue, cadrer, cadrerSur, esc,
-                     normaliser, suggestions } ; suggestions(texte, [{ code, nom }]) : les mêmes règles que le
+                     normaliser, suggestions, echelle, surGlobe } ; carte(c, def) : def.globe pour jouer aussi sur le
+                     globe (z.cx, z.cy sont alors en pixels et suivent la rotation ; z.prof > 0 : face visible) ;
+                     echelle() : unités de la carte par pixel ; surGlobe() : le globe est affiché ; suggestions(texte, [{ code, nom }]) : les mêmes règles que le
                      nommage (3 caractères au moins, début du nom), ou null si le texte est trop court
      clic(code)      (facultatif) appelé à chaque clic sur une zone de la carte ; absent = carte non cliquable
+     rendu()         (facultatif) appelé après chaque rendu de la carte (zoom, déplacement, rotation du globe, bascule
+                     globe / carte plate) : pour placer ses propres repères (ex. numéros des étapes du Grand Chemin)
      sansCarte       true : le jeu n'utilise pas la carte (ex. Morpion des Départements)
    Pas de mode record ni de statistiques pour les jeux à part.
 
@@ -168,6 +176,19 @@
   let apprendre = null;           // module « Apprendre » ouvert (null : la carte sert au quiz)
   let selection = null;           // code de la zone affichée dans la fiche
   let activite = null;            // jeu à part en cours (reçoit les clics sur la carte)
+  let affichage = null;           // dernière carte construite { c, def, bulles } (bascule globe / carte plate)
+  let codesDepart = null;         // zones sur lesquelles la vue de départ est cadrée (recalculée à la bascule)
+  let repereCode = null;          // zone marquée par l'anneau pulsant (null : aucun)
+
+  /* Globe : une catégorie avec def.globe se joue sur un globe (projection orthographique, js/globe.js) ou sur la
+     carte plate. Le nord reste toujours en haut (pas de rotation libre : essayée, abandonnée) ; vue = { q, zoom }
+     (voir js/globe.js) ; R ou ⤢ ramènent à la vue de départ. */
+  const CLE_GLOBE = 'geonohyne.carte.globe';     // '0' : carte plate préférée ; sinon le globe (par défaut)
+  const VUE_GLOBE = window.GeoCarte && GeoCarte.globe ? GeoCarte.globe.vueVers(12, 24, 1) : null;   // départ : Europe et Afrique
+  const DUREE_ROTATION = 700;     // rotation automatique vers une zone (ms)
+  let choixGlobe = null;          // préférence du joueur (lue une fois, gardée en mémoire si le stockage est bloqué)
+  let globe = null;               // globe affiché (null : carte plate) : { carte, zones, decor, vue, rep, anim, … }
+  let rendu = 0;                  // rendu du globe demandé pour la prochaine image
 
   /* ------------------------------------------------------------------ */
   /* Enregistrement des catégories                                       */
@@ -993,6 +1014,17 @@
   // def : catégorie de quiz ou module « Apprendre » ;
   // bulles : true = nom de la zone au survol (jamais en quiz : ce serait donner la réponse)
   function construireSVG(c, def, bulles) {
+    affichage = { c, def, bulles };
+    codesDepart = null;
+    repereCode = null;
+    const cg = def.globe && GeoCarte.globe && GeoCarte.obtenir(def.globe);
+    document.body.dataset.globe = cg ? (prefereGlobe() ? 'globe' : 'plat') : '';
+    majBoutonGlobe();
+    if (cg && prefereGlobe()) return construireGlobe(cg, def, bulles);
+    if (globe) cancelAnimationFrame(globe.anim);
+    globe = null;
+    delete svg.dataset.globe;
+    if (boussole()) boussole().style.transform = '';
     svg.innerHTML = '';
     zones.clear();
     cerclesPoints = [];
@@ -1061,8 +1093,10 @@
   }
 
   function appliquerVue() {
+    if (globe) return demanderRendu();
     svg.setAttribute('viewBox', vue.x + ' ' + vue.y + ' ' + vue.w + ' ' + vue.h);
     majTailles();
+    if (activite && activite.rendu) activite.rendu();
     const z = $('#carte-zoom');
     if (z) z.textContent = 'Zoom ×' + (base.w / vue.w).toFixed(1).replace('.', ',');
   }
@@ -1104,6 +1138,11 @@
 
   // Vue qui montre toutes ces zones (avec une marge), aux proportions de la carte
   function vueSur(codes) {
+    if (globe) {
+      const r = svg.getBoundingClientRect();
+      const cadres = codes.map((c) => zones.get(c).brut).map((b) => b.cadre || [b.cx, b.cy, b.cx, b.cy]);
+      return GeoCarte.globe.vueSur(cadres, r.width || 1000, r.height || 700, zoomMax) || { ...VUE_GLOBE };
+    }
     let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
     codes.forEach((c) => {
       const b = cadreZone(c);
@@ -1145,6 +1184,7 @@
 
   // Retour à la vue de départ : celle de la partie (cadrée sur les groupes choisis) ou toute la carte
   function reinitialiserVue() {
+    if (globe) return allerVers(vueDepart || VUE_GLOBE, DUREE_ROTATION);
     vue = { ...(vueDepart || base) };
     appliquerVue();
   }
@@ -1154,12 +1194,15 @@
     const z = zones.get(code);
     const m = svg.querySelector('#marker');
     if (!z || !m) return;
+    repereCode = code;
+    if (globe) return montrerSurGlobe(code);
     m.setAttribute('cx', z.cx);
     m.setAttribute('cy', z.cy);
     m.style.display = 'block';
     majRepere();
   }
   function masquerRepere() {
+    repereCode = null;
     const m = svg.querySelector('#marker');
     if (m) m.style.display = 'none';
   }
@@ -1203,6 +1246,7 @@
     // Molette : zoom centré sur le curseur
     svg.addEventListener('wheel', (e) => {
       e.preventDefault();
+      if (globe) return zoomerGlobe(Math.exp(-e.deltaY * 0.0015), e.clientX, e.clientY);
       const p = pointSVG(e.clientX, e.clientY);
       zoomer(Math.exp(-e.deltaY * 0.0015), p.x, p.y);
     }, { passive: false });
@@ -1212,7 +1256,8 @@
     let aGlisse = false;
     svg.addEventListener('pointerdown', (e) => {
       if (e.pointerType === 'mouse' && e.button !== 0) return;
-      glisse = { x: e.clientX, y: e.clientY, vx: vue.x, vy: vue.y };
+      glisse = { x: e.clientX, y: e.clientY, vx: vue.x, vy: vue.y, lx: e.clientX, ly: e.clientY };
+      if (globe) cancelAnimationFrame(globe.anim);
       aGlisse = false;
     });
     window.addEventListener('pointermove', (e) => {
@@ -1222,6 +1267,11 @@
       if (!aGlisse && Math.hypot(dx, dy) < 6) return;
       aGlisse = true;
       svg.classList.add('panning');
+      if (globe) {                         // globe : rotation par petits pas, d'un mouvement au suivant
+        tournerGlobe(e.clientX - glisse.lx, e.clientY - glisse.ly);
+        glisse.lx = e.clientX; glisse.ly = e.clientY;
+        return;
+      }
       const k = echellePixel();
       vue.x = glisse.vx - dx * k;
       vue.y = glisse.vy - dy * k;
@@ -1244,12 +1294,233 @@
       b.addEventListener('click', () => {
         const act = b.dataset.zoom;
         if (act === 'reset') return reinitialiserVue();
+        if (act === 'globe') return basculerGlobe();
+        if (globe) return zoomerGlobe(act === 'in' ? 1.6 : 1 / 1.6);
         zoomer(act === 'in' ? 1.6 : 1 / 1.6, vue.x + vue.w / 2, vue.y + vue.h / 2);
       });
     });
     // Taille de la carte modifiée (fenêtre, carte qui apparaît sur un autre écran) : repère et points recalculés
-    if (window.ResizeObserver) new ResizeObserver(() => majTailles()).observe(svg);
-    else window.addEventListener('resize', majTailles);
+    const redimensionner = () => (globe ? demanderRendu() : majTailles());
+    if (window.ResizeObserver) new ResizeObserver(redimensionner).observe(svg);
+    else window.addEventListener('resize', redimensionner);
+
+    // R : retour à la vue de départ (sauf pendant une saisie, où la lettre s'écrit)
+    document.addEventListener('keydown', (e) => {
+      if ((e.key !== 'r' && e.key !== 'R') || e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      if (!svg.getBoundingClientRect().width) return;      // carte cachée (autre écran)
+      e.preventDefault();
+      reinitialiserVue();
+    });
+  }
+
+  /* ------------------------------------------------------------------ */
+  /* Globe : construction, rendu, rotation (géométrie : js/globe.js)     */
+  /* ------------------------------------------------------------------ */
+  function prefereGlobe() {
+    if (choixGlobe === null) {
+      try { choixGlobe = localStorage.getItem(CLE_GLOBE) !== '0'; } catch (e) { choixGlobe = true; }
+    }
+    return choixGlobe;
+  }
+
+  // Bouton 🌐 de la carte : visible seulement si la carte affichée existe aussi en globe
+  function majBoutonGlobe() {
+    const b = $('[data-zoom="globe"]');
+    if (!b) return;
+    const surGlobe = document.body.dataset.globe === 'globe';
+    b.setAttribute('aria-label', surGlobe ? 'Passer à la carte plate' : 'Passer au globe');
+    b.title = surGlobe ? 'Carte plate' : 'Globe';
+    b.setAttribute('aria-pressed', surGlobe ? 'true' : 'false');
+  }
+
+  // Le globe : océan, méridiens et parallèles, décor (Antarctique, territoires gris), zones, limites des groupes,
+  // décor du dessus (limite en pointillés), ombre qui donne le volume, repère. Tous les tracés sont recalculés
+  // à chaque rendu (rendreGlobe) ; les zones gardent leurs éléments, donc leurs états et leurs classes.
+  function construireGlobe(gc, def, bulles) {
+    const G = GeoCarte.globe;
+    if (globe) cancelAnimationFrame(globe.anim);
+    svg.innerHTML = '';
+    zones.clear();
+    cerclesPoints = [];
+    svg.setAttribute('aria-label', 'Globe : ' + def.titre);
+    svg.dataset.carte = def.carte || '';
+    svg.dataset.globe = '1';
+    vueDepart = null;
+    zoomMax = gc.zoomMax || ZOOM_MAX;
+    document.body.dataset.points = gc.elements.some((e) => e.point) ? '1' : '0';
+    document.body.dataset.reperes = '0';
+    globe = { carte: gc, zones: new Map(), decor: [], vue: { ...VUE_GLOBE }, rep: null, anim: 0 };
+
+    const defs = creerSVG('defs');
+    defs.innerHTML = '<radialGradient id="globe-ombre" cx="36%" cy="30%" r="72%">' +
+      '<stop offset="0" stop-color="#ffffff" stop-opacity=".09"/>' +
+      '<stop offset=".5" stop-color="#000000" stop-opacity="0"/>' +
+      '<stop offset="1" stop-color="#000000" stop-opacity=".5"/></radialGradient>';
+    svg.appendChild(defs);
+    globe.ocean = creerSVG('circle', 'globe-ocean');
+    svg.appendChild(globe.ocean);
+    const grille = creerSVG('path', 'globe-graticule');
+    svg.appendChild(grille);
+    globe.decor.push({ el: grille, anneaux: G.graticule(15) });
+
+    const decor = (dessus) => (gc.decor || []).filter((p) => !!p.dessus === dessus).forEach((p) => {
+      const e = creerSVG('path', 'decor-' + (p.classe || 'pays'));
+      if (p.nom && bulles) {
+        const t = creerSVG('title');
+        t.textContent = p.nom;
+        e.appendChild(t);
+        e.classList.add('decor-nomme');
+      }
+      svg.appendChild(e);
+      globe.decor.push({ el: e, anneaux: G.preparer(p.d) });
+    });
+    decor(false);
+
+    const g = creerSVG('g');
+    for (const el of gc.elements) {
+      g.appendChild(creerZone(el, bulles, def));
+      const z = zones.get(el.code);
+      z.forme = el.point ? z.el.querySelector('.point-forme') : z.el;
+      z.cercles = el.point ? [...z.el.querySelectorAll('circle')] : [];
+      globe.zones.set(el.code, G.preparer(el.d));
+    }
+    svg.appendChild(g);
+    if (def.groupes) {                     // limites des groupes (continents), comme sur la carte plate
+      const f = creerSVG('path', 'frontieres');
+      svg.appendChild(f);
+      globe.decor.push({ el: f, anneaux: G.preparer(tracerFrontieres(gc, def.groupes)) });
+    }
+    decor(true);
+
+    globe.ombre = creerSVG('circle', 'globe-ombre');
+    svg.appendChild(globe.ombre);
+    const repere = creerSVG('circle');
+    repere.setAttribute('id', 'marker');
+    repere.style.display = 'none';
+    svg.appendChild(repere);
+    rendreGlobe();
+  }
+
+  function demanderRendu() {
+    if (!rendu) rendu = requestAnimationFrame(() => { rendu = 0; rendreGlobe(); });
+  }
+
+  // Rendu du globe pour la vue globe.vue : le SVG prend la taille de la carte en pixels (viewBox), les tracés
+  // sont projetés, les points des petites zones et le repère suivent ; ce qui est derrière le globe disparaît
+  function rendreGlobe() {
+    if (!globe) return;
+    const rect = svg.getBoundingClientRect();
+    if (!rect.width || !rect.height) return;   // carte cachée : rendu quand elle apparaît (ResizeObserver)
+    const G = GeoCarte.globe;
+    const W = rect.width, H = rect.height;
+    base = { x: 0, y: 0, w: W, h: H };
+    vue = { ...base };
+    svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+    const r = G.cadre(globe.vue, W, H);
+    globe.rep = r;
+    const angle = G.nord(r);                  // la boussole tourne avec le globe (pôle au centre : inchangée)
+    if (boussole() && angle !== null) boussole().style.transform = 'rotate(' + angle.toFixed(1) + 'deg)';
+    [globe.ocean, globe.ombre].forEach((c) => {
+      c.setAttribute('cx', r.cx); c.setAttribute('cy', r.cy); c.setAttribute('r', r.R);
+    });
+    globe.decor.forEach((p) => p.el.setAttribute('d', G.chemin(p.anneaux, r)));
+    zones.forEach((z, code) => {
+      if (z.forme) z.forme.setAttribute('d', G.chemin(globe.zones.get(code), r));
+      const p = G.projeter(z.brut.cx, z.brut.cy, r);
+      z.cx = p.x; z.cy = p.y; z.prof = p.z;
+      if (z.cercles.length) {
+        z.el.style.display = p.z > 0.02 ? '' : 'none';
+        z.cercles.forEach((c) => { c.setAttribute('cx', p.x); c.setAttribute('cy', p.y); });
+      }
+    });
+    const m = svg.querySelector('#marker');
+    const z = repereCode && zones.get(repereCode);
+    if (m && z) {
+      m.setAttribute('cx', z.cx);
+      m.setAttribute('cy', z.cy);
+      m.style.display = z.prof > 0 ? 'block' : 'none';
+    }
+    majTailles();
+    const zl = $('#carte-zoom');
+    if (zl) zl.textContent = 'Zoom ×' + globe.vue.zoom.toFixed(1).replace('.', ',');
+    if (activite && activite.rendu) activite.rendu();
+  }
+
+  const boussole = () => $('#map-wrap .boussole--carte');
+
+  // Rotation au glisser : la longitude suit le geste horizontal, la latitude le geste vertical (butée aux pôles) ;
+  // le nord reste en haut
+  function tournerGlobe(dx, dy) {
+    globe.vue = GeoCarte.globe.rouler(globe.vue, dx, dy, globe.rep ? globe.rep.R : 300);
+    demanderRendu();
+  }
+
+  // Zoom, centré sur le curseur s'il est sur le globe (le point visé reste sous le curseur)
+  function zoomerGlobe(facteur, clientX, clientY) {
+    if (!globe.rep) return;
+    cancelAnimationFrame(globe.anim);
+    const G = GeoCarte.globe, rect = svg.getBoundingClientRect();
+    let v = { ...globe.vue, zoom: Math.min(zoomMax, Math.max(1, globe.vue.zoom * facteur)) };
+    if (clientX !== undefined) {
+      const x = clientX - rect.left, y = clientY - rect.top, p = G.inverser(x, y, globe.rep);
+      if (p) v = G.viser(v, x, y, p[0], p[1], rect.width, rect.height);
+    }
+    globe.vue = v;
+    demanderRendu();
+  }
+
+  // Rotation douce jusqu'à une vue (immédiate si les animations sont réduites)
+  function allerVers(cible, duree) {
+    if (!globe) return;
+    cancelAnimationFrame(globe.anim);
+    const depart = { ...globe.vue };
+    const reduit = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!duree || reduit || !globe.rep) { globe.vue = { ...cible }; return demanderRendu(); }
+    const t0 = performance.now();
+    const pas = (t) => {
+      const k = Math.min(1, (t - t0) / duree), e = k < 0.5 ? 2 * k * k : 1 - Math.pow(2 - 2 * k, 2) / 2;
+      globe.vue = GeoCarte.globe.interpoler(depart, cible, e);
+      rendreGlobe();
+      if (k < 1) globe.anim = requestAnimationFrame(pas);
+    };
+    globe.anim = requestAnimationFrame(pas);
+  }
+
+  // Repère sur le globe : la zone est amenée devant si elle est cachée, trop au bord ou hors de l'écran
+  function montrerSurGlobe(code) {
+    const z = zones.get(code);
+    const m = svg.querySelector('#marker');
+    const rect = svg.getBoundingClientRect();
+    m.style.display = 'block';
+    rendreGlobe();
+    const dehors = z.cx < 0 || z.cy < 0 || z.cx > rect.width || z.cy > rect.height;
+    // Rotation douce jusqu'à la zone (le nord reste en haut)
+    if (!(z.prof > 0.35) || dehors) allerVers(GeoCarte.globe.amener(globe.vue, z.brut.cx, z.brut.cy), DUREE_ROTATION);
+  }
+
+  // Bouton 🌐 : globe <-> carte plate, en gardant la partie (états et classes des zones, vue de départ, repère)
+  function basculerGlobe() {
+    if (!affichage || !document.body.dataset.globe) return;
+    choixGlobe = !prefereGlobe();
+    try { localStorage.setItem(CLE_GLOBE, choixGlobe ? '1' : '0'); } catch (e) { /* stockage bloqué : choix gardé en mémoire */ }
+    const CLASSES = ['hors-quiz', 'masque', 'filtre-off', 'survol'];
+    const etats = new Map();
+    zones.forEach((z, code) => etats.set(code, { etat: z.el.dataset.state, classes: CLASSES.filter((k) => z.el.classList.contains(k)) }));
+    const marque = repereCode, codes = codesDepart;
+    construireSVG(affichage.c, affichage.def, affichage.bulles);
+    zones.forEach((z, code) => {
+      const e = etats.get(code);
+      if (!e) return;
+      formes(z).forEach((f) => { f.dataset.state = e.etat; e.classes.forEach((k) => f.classList.add(k)); });
+    });
+    codesDepart = codes;
+    vueDepart = codes ? vueSur(codes) : null;
+    if (globe) globe.vue = { ...(vueDepart || VUE_GLOBE) };
+    else reinitialiserVue();
+    if (globe) rendreGlobe();
+    if (marque) afficherRepere(marque);
   }
 
   /* ------------------------------------------------------------------ */
@@ -1399,6 +1670,7 @@
     masquerRepere();
     $('#screen-game').appendChild($('#map-wrap'));   // la carte est partagée avec le mode « Apprendre »
     // Par groupes (régions, continents…) ou en record : la carte se cadre sur les zones choisies ; ⤢ y revient
+    codesDepart = estompe ? candidats : null;
     vueDepart = estompe ? vueSur(candidats) : null;
     reinitialiserVue();
 
@@ -1990,6 +2262,11 @@
   // vient des données (un pays et non ses territoires lointains), pas du dessin.
   function cadrerZone(code) {
     if (!zones.has(code)) return;
+    if (globe) {
+      const b = zones.get(code).brut;
+      const cible = GeoCarte.globe.amener(globe.vue, b.cx, b.cy);
+      return allerVers({ q: cible.q, zoom: Math.max(globe.vue.zoom, 3) }, DUREE_ROTATION);
+    }
     const [x0, y0, x1, y1] = cadreZone(code);
     const ratio = base.h / base.w;
     const w = Math.min(base.w, Math.max(base.w / 7, Math.max(x1 - x0, (y1 - y0) / ratio) * 3));
@@ -2132,10 +2409,12 @@
     etat,                                              // etat(code, 'valeur') : attribut data-state
     reinitialiserVue,
     cadrer: (code) => cadrerZone(code),
-    cadrerSur: (codes) => { vueDepart = vueSur(codes); reinitialiserVue(); },   // vue de départ sur ces zones (⤢ y revient)
+    cadrerSur: (codes) => { codesDepart = codes; vueDepart = vueSur(codes); reinitialiserVue(); },   // vue de départ sur ces zones (⤢ y revient)
     esc,
     normaliser: (s) => normaliser(s),                  // texte sans accents ni majuscules (recherche)
-    suggestions: (texte, entrees) => filtrerNoms(texte, entrees)   // suggestions de noms, comme le nommage
+    suggestions: (texte, entrees) => filtrerNoms(texte, entrees),  // suggestions de noms, comme le nommage
+    echelle: () => echellePixel(),                     // unités de la carte par pixel (0 si cachée)
+    surGlobe: () => !!globe                            // le globe est affiché (sinon la carte plate)
   };
 
   function ouvrirJeu(id) {

@@ -21,6 +21,8 @@ dans le `CLAUDE.md` de la racine ; la documentation complète pour un humain est
 |---|---|
 | `js/core.js` | **le noyau** (~100 Ko) : enregistrement des modules, écran de choix, quiz, mode Apprendre, carte SVG interactive, correction des saisies. **Lis d'abord son en-tête** : il décrit tous les contrats. |
 | `js/carte.js` | moteur de cartes (GeoJSON → SVG), sans aucune donnée |
+| `js/grand-chemin.js` | moteur des deux « Grand Chemin » (`GeoNohyne.grandChemin(config)` : contrat en tête) ; versions dans `js/france/grand-chemin.js` et `js/monde/grand-chemin-monde.js` |
+| `js/globe.js` | géométrie du globe (`GeoCarte.globe` : projection orthographique, découpage à l'horizon), sans donnée ni DOM |
 | `js/menu.js` | **le catalogue du menu** (`MENU` : chapitres et cartes, `ICONES`, `TEINTES`, `IMAGES`) ; chargé en dernier |
 | `js/profils.js` / `js/compte.js` | statistiques (invité ou compte) / bouton et menu du compte, écran des statistiques |
 | `js/ancien-nom.js` | reprise des clés `geoquiz.*` → `geonohyne.*`, chargé en premier (dans `<head>`) |
@@ -79,9 +81,28 @@ Ajouter un module : le fichier, sa balise `<script>` dans la bonne section de `i
   hasard ; une grille n'est proposée que si elle est **toujours remplissable** ; un critère n'est gardé que
   s'il sépare assez de départements. **Cas limites** (à moins de 2 % d'un seuil chiffré, ou trop près de
   Paris) : jamais comptés contre le joueur, jamais utilisés pour départager.
-- **Le Grand Chemin** : graphe des voisinages (France continentale, 94 départements), plus courts chemins,
+- **Le Grand Chemin** (un moteur, deux versions ; choix de Théo, 2.4.0) : le moteur `js/grand-chemin.js` reçoit
+  une configuration (réseau des voisins par région, carte, mots « département » / « pays », réglages et clés) et
+  partage l'écran `#screen-chemin` ; un jeu à part peut définir `rendu()` (core.js l'appelle après chaque rendu
+  de la carte : numéros des étapes sur le globe). Monde : frontières d'outre-mer comprises (France–Brésil…),
+  réglage « Région » (monde, Europe, Afrique, Asie, Amériques), globe par défaut. Graphe des voisinages, plus courts chemins,
   chemin parfait construit tronçon par tronçon (étapes = vrais détours), recherche bornée par un budget
   (au-delà, on accepte plutôt que bloquer).
+- **Globe** (2.4.0, choix de Théo : globe par défaut, carte plate au choix, **nord toujours en haut** (la rotation
+  libre, comme une boule, a été essayée et refusée : « horrible pour jouer »), **R** = vue de départ,
+  Europe-Afrique ou continents choisis ; records communs globe / plat) : une catégorie avec `globe: '<id>'` (seulement `pays` pour l'instant ; mers et Apprendre plus tard) se
+  joue sur la carte globe `<id>` (`data/monde/globe-pays.js`, en degrés, générée par `outils/construire-monde.js`
+  avec la carte plate). `core.js` construit le SVG une fois puis recalcule tous les tracés à chaque rotation
+  (`rendreGlobe`, viewBox = pixels de la carte) ; les zones gardent leurs éléments, donc états et classes. Vue =
+  `{ q, zoom }` (quaternion, mais toute vue est redressée : `vueVers(lon, lat)` = nord en haut ; `rouler` au
+  glisser avec butée aux pôles, `amener` et `interpoler` pour les rotations automatiques) ; `vueSur`, `reinitialiserVue`, `afficherRepere` (rotation vers une zone cachée) et
+  `cadrerZone` ont leur branche globe. Bouton 🌐 (`data-zoom="globe"`, visible si `body[data-globe]`) :
+  `basculerGlobe()` reconstruit la carte en gardant états, classes, vue de départ et repère. Préférence :
+  `geonohyne.carte.globe`. **Découpage à l'horizon** (`anneau()` de `globe.js`) : Weiler-Atherton, chaque
+  sortie reliée à l'entrée la plus proche *le long de l'horizon* dans le sens de l'anneau ; il faut donc des
+  anneaux orientés (extérieurs dans le sens direct, trous dans l'autre : fait par le générateur) ; un tour
+  presque complet (frôlement de l'horizon) vaut une jonction directe. Vérifié sur 4 000 vues au hasard (aucun
+  morceau ne couvre le disque). Une carte globe n'a ni `largeur` ni `hauteur` (`carte.js` l'accepte).
 - **Délais** (en tête de `core.js`) : `DELAI_BONNE` 500 ms, `DELAI_FAUSSE` 1 500 ms.
 
 ## Pièges
@@ -98,7 +119,8 @@ Ajouter un module : le fichier, sa balise `<script>` dans la bonne section de `i
 
 ## Plans
 
-- Cartes grisées prévues : `{ quiz: 'capitales' }`, `{ jeu: 'morpion-monde' }`,
-  `{ jeu: 'grand-chemin-monde' }` (données déjà dans `data/monde/infos-pays.js`, `voisins` compris). Les
-  jeux « monde » pourront reprendre le moteur du Morpion et du Grand Chemin : demande à Théo si un fichier à
-  part ou une option des jeux existants est préférable.
+- **Globe** : l'étendre aux océans et mers et aux modes Apprendre (pays, mers) ; peut-être un relief (ombrage
+  des montagnes) : à voir avec Théo.
+- Cartes grisées prévues : `{ quiz: 'capitales' }`, `{ jeu: 'morpion-monde' }` (données déjà dans
+  `data/monde/infos-pays.js`, `voisins` compris). Le Morpion du monde pourra reprendre le moteur du Morpion
+  comme le Grand Chemin l'a fait (un moteur, une configuration par version) : demande à Théo.

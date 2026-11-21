@@ -49,7 +49,7 @@
   const DUEL = ['Solo', 'Duel'];
 
   const JEUX = [
-    { id: 'geonohyne', dossier: 'GEONOHYNE_QUIZZ', nom: 'Géonohyne Quizz', icone: '🌍', version: '2.3.0',
+    { id: 'geonohyne', dossier: 'GEONOHYNE_QUIZZ', nom: 'Géonohyne Quizz', icone: '🌍', version: '2.4.0',
       couleur: '#0d3b4a', accent: '#ff7a59',
       description: 'Géographie : départements, fleuves, pays et mers du monde.',
       totaux: { cle: 'totaux', parties: 'parties', bonnes: 'bonnes', questions: 'questions', temps: 'tempsMs', ms: true },
@@ -65,7 +65,7 @@
         { id: 'capitales', nom: 'Les capitales du monde', groupe: 'Monde', variantes: CIBLAGE, bientot: true },
         { id: 'oceans-mers', nom: 'Les océans et mers', groupe: 'Monde', variantes: CIBLAGE },
         { id: 'morpion-monde', nom: 'Le morpion du monde', groupe: 'Monde', variantes: DUEL, bientot: true },
-        { id: 'grand-chemin-monde', nom: 'Le Grand Chemin du monde', groupe: 'Monde', bientot: true }
+        { id: 'grand-chemin-monde', nom: 'Le Grand Chemin du monde', groupe: 'Monde' }
       ] },
     { id: 'anotehomy', dossier: 'ANOTEHOMY_QUIZZ', nom: 'Anotehomy Quizz', icone: '🦴', version: '2.5.1',
       couleur: '#3a1529', accent: '#ff5c8a',

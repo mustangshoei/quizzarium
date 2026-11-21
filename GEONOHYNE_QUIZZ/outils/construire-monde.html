@@ -13,7 +13,8 @@
   <div class="panel" style="margin-top:1.5rem">
     <h1 class="tool-title">Cartes du monde</h1>
     <p class="lead">
-      Fabrique <code>data/monde/carte-pays.js</code> et <code>data/monde/carte-mers.js</code> à partir des données
+      Fabrique <code>data/monde/carte-pays.js</code>, <code>data/monde/globe-pays.js</code> (les mêmes pays en degrés,
+      pour le globe) et <code>data/monde/carte-mers.js</code> à partir des données
       Natural Earth (domaine public). Tout se passe dans votre navigateur : aucun fichier n'est envoyé nulle part.
       La liste des pays, des mers et leurs niveaux de difficulté se règlent au début de <code>outils/construire-monde.js</code>.
     </p>
@@ -46,13 +47,14 @@
       </div>
       <div class="tool-step">
         <button type="button" class="btn btn-primary" data-telecharger="pays">Télécharger carte-pays.js</button>
+        <button type="button" class="btn btn-primary" data-telecharger="globe">Télécharger globe-pays.js</button>
         <button type="button" class="btn btn-primary" data-telecharger="mers">Télécharger carte-mers.js</button>
         <button type="button" class="btn btn-soft" data-telecharger="rapport">Télécharger le rapport</button>
       </div>
       <div class="tool-next">
         <strong>Ensuite</strong>
         <ol>
-          <li>Remplacez les deux fichiers de <code>data/monde/</code> par ceux téléchargés.</li>
+          <li>Remplacez les trois fichiers de <code>data/monde/</code> par ceux téléchargés.</li>
           <li>Le rapport liste les voisins terrestres, les territoires rattachés, les pays riverains et les mers voisines
             calculés sur la carte : comparez-les avec <code>data/monde/infos-pays.js</code> et
             <code>data/monde/infos-mers.js</code>, qui se modifient à la main (une ligne par pays ou par mer).</li>
@@ -108,13 +110,15 @@
         const r = ConstruireMonde.construire(JSON.parse(textes.pays), JSON.parse(textes.mers));
         resultat = {
           pays: ConstruireMonde.versScript('monde-pays', r.cartePays),
+          globe: ConstruireMonde.versScript('monde-pays-globe', r.globePays),
           mers: ConstruireMonde.versScript('monde-mers', r.carteMers),
           rapport: JSON.stringify(r.rapport, null, 1)
         };
         const s = r.rapport.stats;
         $('#resume').textContent = s.pays + ' pays (' + s.paysPoints.length + ' signalés par un point) · ' + s.mers +
           ' mers et détroits (niveaux 1 à 4 : ' + s.mersParNiveau.join(', ') + ') · ' +
-          Math.round(resultat.pays.length / 1024) + ' Ko + ' + Math.round(resultat.mers.length / 1024) + ' Ko' +
+          Math.round(resultat.pays.length / 1024) + ' Ko + ' + Math.round(resultat.globe.length / 1024) + ' Ko (globe) + ' +
+          Math.round(resultat.mers.length / 1024) + ' Ko' +
           (r.rapport.manquants.length ? ' · pays introuvables : ' + r.rapport.manquants.join(', ') : '') +
           (r.rapport.mersIntrouvables.length ? ' · mers introuvables : ' + r.rapport.mersIntrouvables.join(', ') : '');
         apercu($('#apercu-pays'), r.cartePays);
@@ -129,7 +133,7 @@
 
   function telecharger(cle) {
     if (!resultat) return;
-    const noms = { pays: 'carte-pays.js', mers: 'carte-mers.js', rapport: 'rapport-monde.json' };
+    const noms = { pays: 'carte-pays.js', globe: 'globe-pays.js', mers: 'carte-mers.js', rapport: 'rapport-monde.json' };
     const blob = new Blob([resultat[cle]], { type: cle === 'rapport' ? 'application/json' : 'text/javascript' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);

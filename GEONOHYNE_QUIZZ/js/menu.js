@@ -35,7 +35,7 @@
       cartes: [
         { quiz: 'departements', icone: 'carte', teinte: 'ciel' },               // js/france/quiz-departements.js
         { quiz: 'fleuves', icone: 'vagues', teinte: 'lagon' },                  // js/france/quiz-fleuves.js
-        { jeu: 'grand-chemin', icone: 'chemin', teinte: 'corail', meta: '3 à 15 sauts · détours' },   // js/france/grand-chemin.js
+        { jeu: 'grand-chemin', icone: 'chemin', teinte: 'corail', meta: '3 à 15 sauts · détours' },   // js/france/grand-chemin.js (moteur : js/grand-chemin.js)
         { jeu: 'morpion', icone: 'grille', teinte: 'lavande', meta: 'Solo · Duel' },                // js/france/morpion.js
         { jeu: 'liste', icone: 'liste', teinte: 'sable', meta: 'Chrono · indices' },                 // js/france/liste.js
         { jeu: 'codage', icone: 'diese', teinte: 'prairie', meta: '3 à 30 s par question' },         // js/france/codage.js
@@ -52,7 +52,7 @@
         { quiz: 'pays', icone: 'globe', teinte: 'azur' },                       // js/monde/quiz-pays.js
         { quiz: 'capitales',         titre: 'Les capitales du monde', description: 'Retrouvez la capitale de chaque pays.' },
         { jeu: 'morpion-monde',      titre: 'Le morpion du monde',    description: 'Tic-tac-toe géographique avec les pays du monde, en solo ou à deux.' },
-        { jeu: 'grand-chemin-monde', titre: 'Le Grand Chemin',        description: 'Reliez deux pays de voisin en voisin, par le chemin le plus court.' },
+        { jeu: 'grand-chemin-monde', icone: 'chemin', teinte: 'corail', meta: '3 à 20 sauts · régions' },   // js/monde/grand-chemin-monde.js
         { quiz: 'oceans-mers', icone: 'ancre', teinte: 'lagon' }                // js/monde/quiz-oceans-mers.js
       ]
     },
